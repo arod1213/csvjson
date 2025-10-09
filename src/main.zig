@@ -9,13 +9,16 @@ pub fn main() !void {
     defer arena.deinit();
     const alloc = arena.allocator();
 
-    var in = stdin();
+    // var in = stdin();
+    var in_buf: [4096]u8 = undefined;
+    var reader = std.fs.File.stdin().reader(&in_buf);
+
     var stdout = std.fs.File.stdout();
     var out = std.Io.Writer.Allocating.init(alloc);
     defer out.clearRetainingCapacity();
 
     const args = try cli.Args().init();
-    var csv_reader = try csvjson.CSVReader.init(alloc, &in, &args);
+    var csv_reader = try csvjson.CSVReader.init(alloc, &reader.interface, &args);
 
     _ = try stdout.write("[");
     var idx: usize = 0;

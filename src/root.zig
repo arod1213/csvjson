@@ -16,22 +16,22 @@ pub const cli = @import("cli.zig");
 
 pub const CSVReader = struct {
     alloc: Allocator,
-    file: *std.fs.File,
+    reader: *std.Io.Reader,
     headers: std.ArrayList([]const u8),
     done: bool = false,
     line_count: usize = 0,
     args: *const cli.Args(),
     separator: u8,
 
-    pub fn init(alloc: Allocator, file: *std.fs.File, args: *const cli.Args()) !@This() {
+    pub fn init(alloc: Allocator, reader: *std.Io.Reader, args: *const cli.Args()) !@This() {
         const sep = args.separator;
 
-        const heading = try read.readUntilDelimiters(file, "\n");
-        const headers = try collectFields(alloc, heading.?, sep);
+        const heading = try reader.takeDelimiterExclusive('\n');
+        const headers = try collectFields(alloc, heading, sep);
 
         return .{
             .alloc = alloc,
-            .file = file,
+            .reader = reader,
             .headers = headers,
             .args = args,
             .separator = sep,
@@ -47,15 +47,12 @@ pub const CSVReader = struct {
         out.clearRetainingCapacity();
 
         while (self.line_count <= self.args.offset) {
-            const skipped = try read.readUntilDelimiters(self.file, "\n");
-            if (skipped == null) return error.EOF;
+            _ = try self.reader.takeDelimiterExclusive('\n');
             self.line_count += 1;
         }
 
-        const line = try read.readUntilDelimiters(self.file, "\n");
-        if (line == null) return error.EOF;
-
-        const json_obj = try collectJSON(self.alloc, line.?, self.separator, &self.headers);
+        const line = try self.reader.takeDelimiterExclusive('\n');
+        const json_obj = try collectJSON(self.alloc, line, self.separator, &self.headers);
 
         const json_str = try write.stringify(out, &json_obj, self.args.minified);
         return json_str;
