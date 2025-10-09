@@ -1,0 +1,4 @@
+*.csv
+*.DS_Store
+zig-out/
+*.json
