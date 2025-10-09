@@ -7,6 +7,17 @@ const read = @import("read.zig");
 const array = std.ArrayList;
 const json = std.json;
 
+pub fn parseSeparator(value: []const u8) u8 {
+    assert(value.len > 0);
+    if (std.mem.eql(u8, value, ",") or std.mem.eql(u8, value, "comma")) {
+        return ',';
+    } else if (std.mem.eql(u8, value, "tab") or std.mem.eql(u8, value, "t")) {
+        return '\t';
+    } else {
+        return value[0];
+    }
+}
+
 // TODO: return struct with useful args
 //
 pub fn Args() type {
@@ -14,6 +25,7 @@ pub fn Args() type {
         offset: usize = 0,
         line_count: ?usize = null, // null for file read
         minified: bool = false,
+        separator: u8 = ',',
 
         pub fn init() !@This() {
             var self = @This(){};
@@ -32,6 +44,7 @@ pub fn Args() type {
                     'o', 'O' => self.offset = try std.fmt.parseInt(usize, value, 10),
                     'l', 'L' => self.line_count = try std.fmt.parseInt(usize, value, 10),
                     'm', 'M' => self.minified = true,
+                    's', 'S' => self.separator = parseSeparator(value),
                     else => {},
                 }
             }

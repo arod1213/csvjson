@@ -1,4 +1,6 @@
 *.csv
+*.tsv
 *.DS_Store
 zig-out/
 *.json
+.zig-cache/

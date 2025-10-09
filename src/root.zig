@@ -21,16 +21,20 @@ pub const CSVReader = struct {
     done: bool = false,
     line_count: usize = 0,
     args: *const cli.Args(),
+    separator: u8,
 
     pub fn init(alloc: Allocator, file: *std.fs.File, args: *const cli.Args()) !@This() {
+        const sep = args.separator;
+
         const heading = try read.readUntilDelimiters(file, "\n");
-        const headers = try collectFields(alloc, heading.?);
+        const headers = try collectFields(alloc, heading.?, sep);
 
         return .{
             .alloc = alloc,
             .file = file,
             .headers = headers,
             .args = args,
+            .separator = sep,
         };
     }
 
@@ -51,26 +55,26 @@ pub const CSVReader = struct {
         const line = try read.readUntilDelimiters(self.file, "\n");
         if (line == null) return error.EOF;
 
-        const json_obj = try collectJSON(self.alloc, line.?, &self.headers);
+        const json_obj = try collectJSON(self.alloc, line.?, self.separator, &self.headers);
 
         const json_str = try write.stringify(out, &json_obj, self.args.minified);
         return json_str;
     }
 };
 
-fn collectFields(alloc: Allocator, line: []const u8) !array([]const u8) {
+fn collectFields(alloc: Allocator, line: []const u8, sep: u8) !array([]const u8) {
     var arr = try array([]const u8).initCapacity(alloc, 10);
 
     var start: usize = 0;
     while (true) {
-        const field = fmt.getField(alloc, line, &start) catch break;
+        const field = fmt.getField(alloc, line, sep, &start) catch break;
         _ = arr.append(alloc, field) catch break;
     }
     return arr;
 }
 
-fn collectJSON(alloc: Allocator, line: []const u8, headers: *array([]const u8)) !json.Value {
-    var data = try collectFields(alloc, line);
+fn collectJSON(alloc: Allocator, line: []const u8, sep: u8, headers: *array([]const u8)) !json.Value {
+    var data = try collectFields(alloc, line, sep);
     defer data.deinit(alloc);
     var map = try link.linkHeaders(alloc, headers, &data);
     defer map.deinit();

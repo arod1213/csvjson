@@ -28,7 +28,7 @@ pub fn parseDynamicValue(s: []const u8) json.Value {
     return json.Value{ .string = s };
 }
 
-pub fn getField(alloc: Allocator, line: []const u8, start_pos: *usize) ![]const u8 {
+pub fn getField(alloc: Allocator, line: []const u8, sep: u8, start_pos: *usize) ![]const u8 {
     if (line.len == 0) return error.Empty;
     if (start_pos.* >= line.len) return error.OutOfBounds;
 
@@ -42,7 +42,7 @@ pub fn getField(alloc: Allocator, line: []const u8, start_pos: *usize) ![]const 
     var buf = try alloc.alloc(u8, slice.len);
     var idx: usize = 0;
     for (slice) |c| {
-        if (c == ',' and isEscaped) break;
+        if (c == sep and isEscaped) break;
         if (idx != 0 and c == '\"') {
             isEscaped = true;
         }
