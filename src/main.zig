@@ -9,14 +9,15 @@ pub fn main() !void {
     defer arena.deinit();
     const alloc = arena.allocator();
 
-    const args = try cli.Args().init();
-
     var in = stdin();
     var stdout = std.fs.File.stdout();
     var out = std.Io.Writer.Allocating.init(alloc);
+    defer out.clearRetainingCapacity();
 
+    const args = try cli.Args().init();
     var csv_reader = try csvjson.CSVReader.init(alloc, &in, &args);
 
+    _ = try stdout.write("[");
     var idx: usize = 0;
     while (true) : (idx += 1) {
         if (args.line_count) |lc| {
@@ -25,11 +26,11 @@ pub fn main() !void {
             }
         }
         const json_str = csv_reader.next(&out) catch break;
-        // alloc.free(json_str);
         _ = try stdout.write(json_str);
-        _ = try stdout.write("\n");
+        // TODO: strip last comma
+        _ = try stdout.write(",\n");
     }
-    out.clearRetainingCapacity();
+    _ = try stdout.write("]");
 }
 
 test "leaks" {
