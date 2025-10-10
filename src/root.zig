@@ -42,9 +42,8 @@ pub const CSVReader = struct {
         self.headers.deinit(self.alloc);
     }
 
-    pub fn next(self: *@This(), out: *std.Io.Writer.Allocating) ![]const u8 {
+    pub fn next(self: *@This()) !json.Value {
         self.line_count += 1;
-        out.clearRetainingCapacity();
 
         while (self.line_count <= self.args.offset) {
             _ = try self.reader.takeDelimiterExclusive('\n');
@@ -52,10 +51,7 @@ pub const CSVReader = struct {
         }
 
         const line = try self.reader.takeDelimiterExclusive('\n');
-        const json_obj = try collectJSON(self.alloc, line, self.separator, &self.headers);
-
-        const json_str = try write.stringify(out, &json_obj, self.args.minified);
-        return json_str;
+        return try collectJSON(self.alloc, line, self.separator, &self.headers);
     }
 };
 
