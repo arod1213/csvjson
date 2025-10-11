@@ -6,6 +6,7 @@ pub fn build(b: *std.Build) void {
     const mod = b.addModule("csvjson", .{
         .root_source_file = b.path("src/root.zig"),
         .target = target,
+        .optimize = .ReleaseFast,
     });
 
     const exe = b.addExecutable(.{

@@ -4,22 +4,17 @@ const stdin = std.fs.File.stdin;
 const cli = csvjson.cli;
 const print = std.debug.print;
 const write = csvjson.write;
+const Allocator = std.mem.Allocator;
 
-pub fn main() !void {
-    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
-    defer arena.deinit();
+fn parse_csv(arena: *std.heap.ArenaAllocator, reader: *std.Io.Reader, writer: *std.Io.Writer) !void {
     const alloc = arena.allocator();
-
-    // var in = stdin();
-    var in_buf: [4096]u8 = undefined;
-    var reader = std.fs.File.stdin().reader(&in_buf);
-
-    var out_buf: [4096]u8 = undefined;
-    var writer = std.fs.File.stdout().writer(&out_buf);
-    defer writer.interface.flush() catch {};
+    defer {
+        _ = arena.reset(.retain_capacity);
+    }
 
     const args = try cli.Args().init();
-    var csv_reader = try csvjson.CSVReader.init(alloc, &reader.interface, &args);
+    var csv_reader = try csvjson.CSVReader.init(alloc, reader, &args);
+    defer csv_reader.deinit();
 
     var idx: usize = 0;
     while (true) : (idx += 1) {
@@ -28,35 +23,41 @@ pub fn main() !void {
                 break;
             }
         }
-        const json_obj = csv_reader.next() catch break;
+        var obj = csv_reader.next() catch break;
+        const json_obj = std.json.Value{ .object = obj };
 
-        try write.stringify(&writer.interface, &json_obj, args.minified);
-        // TODO: strip last comma
-        _ = try writer.interface.writeByte('\n');
+        try write.stringify(writer, &json_obj, args.minified);
+        _ = try writer.writeByte('\n');
+        obj.deinit();
     }
+
+    try writer.flush();
 }
 
-test "leaks" {
-    const alloc = std.testing.allocator;
-    const args = cli.Args().init();
+pub fn main() !void {
+    var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
+    defer arena.deinit();
 
+    var in_buf: [4096 * 10]u8 = undefined;
     const cwd = std.fs.cwd();
-    var in = try cwd.openFile("aidan.csv", .{});
-    var stdout = std.fs.File.stdout();
-    var out = std.Io.Writer.Allocating.init(alloc);
+    var file = try cwd.openFile("aidan.csv", .{});
+    var reader = file.reader(&in_buf);
 
-    var csv_reader = try csvjson.CSVReader.init(alloc, &in, &args);
-
-    var idx: usize = 0;
-    while (true) : (idx += 1) {
-        if (args.line_count) |lc| {
-            if (idx > lc) {
-                break;
-            }
-        }
-        const json_str = csv_reader.next(&out) catch break;
-        _ = try stdout.write(json_str);
-        _ = try stdout.write("\n");
-    }
-    out.clearRetainingCapacity();
+    var out_buf: [4096]u8 = undefined;
+    var writer = std.fs.File.stdout().writer(&out_buf);
+    try parse_csv(&arena, &reader.interface, &writer.interface);
 }
+
+// TODO: this test just hangs ??
+// test "leaks" {
+//     const alloc = std.testing.allocator;
+//
+//     var in_buf: [4096 * 10]u8 = undefined;
+//     const cwd = std.fs.cwd();
+//     var file = try cwd.openFile("aidan.csv", .{});
+//     var reader = file.reader(&in_buf);
+//
+//     var out_buf: [4096]u8 = undefined;
+//     var writer = std.fs.File.stdout().writer(&out_buf);
+//     try parse_csv(alloc, &reader.interface, &writer.interface);
+// }

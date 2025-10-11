@@ -11,7 +11,6 @@ const json = std.json;
 pub const fmt = @import("fmt.zig");
 pub const write = @import("write.zig");
 pub const link = @import("link.zig");
-pub const read = @import("read.zig");
 pub const cli = @import("cli.zig");
 
 pub const CSVReader = struct {
@@ -42,7 +41,7 @@ pub const CSVReader = struct {
         self.headers.deinit(self.alloc);
     }
 
-    pub fn next(self: *@This()) !json.Value {
+    pub fn next(self: *@This()) !std.json.ObjectMap {
         self.line_count += 1;
 
         while (self.line_count <= self.args.offset) {
@@ -51,7 +50,7 @@ pub const CSVReader = struct {
         }
 
         const line = try self.reader.takeDelimiterExclusive('\n');
-        return try collectJSON(self.alloc, line, self.separator, &self.headers);
+        return try collectObject(self.alloc, line, self.separator, &self.headers);
     }
 };
 
@@ -66,12 +65,55 @@ fn collectFields(alloc: Allocator, line: []const u8, sep: u8) !array([]const u8)
     return arr;
 }
 
-fn collectJSON(alloc: Allocator, line: []const u8, sep: u8, headers: *array([]const u8)) !json.Value {
+test "collect fields" {
+    const alloc = std.testing.allocator;
+    const line = "giraffe,dog,cat,\"[alligator, crocodile]\"";
+    const sep = ',';
+
+    var arr = try std.ArrayList([]const u8).initCapacity(alloc, 4);
+    defer arr.deinit(alloc);
+    try arr.append(alloc, "giraffe");
+    try arr.append(alloc, "dog");
+    try arr.append(alloc, "cat");
+    try arr.append(alloc, "[alligator, crocodile]");
+
+    var answer = try collectFields(alloc, line, sep);
+    defer answer.deinit(alloc);
+    for (arr.items, 0..) |expected, i| {
+        var result = answer.items[i];
+        _ = &result;
+        try expect(std.mem.eql(u8, expected, result));
+        alloc.free(result);
+    }
+}
+
+fn collectObject(alloc: Allocator, line: []const u8, sep: u8, headers: *array([]const u8)) !std.json.ObjectMap {
     var data = try collectFields(alloc, line, sep);
     defer data.deinit(alloc);
+    defer {
+        for (data.items) |result| {
+            alloc.free(result);
+        }
+    }
+
     var map = try link.linkHeaders(alloc, headers, &data);
     defer map.deinit();
 
-    const json_obj = try link.mapToJson(alloc, &map);
-    return json_obj;
+    return try link.mapToObject(alloc, &map);
+}
+
+test "mem" {
+    const alloc = std.testing.allocator;
+    const line = "giraffe,dog,cat,\"[alligator, crocodile]\"";
+    const sep = ',';
+
+    var arr = try std.ArrayList([]const u8).initCapacity(alloc, 4);
+    defer arr.deinit(alloc);
+    try arr.append(alloc, "row1");
+    try arr.append(alloc, "row2");
+    try arr.append(alloc, "row3");
+    try arr.append(alloc, "row4");
+
+    var obj = try collectObject(alloc, line, sep, &arr);
+    defer obj.deinit();
 }

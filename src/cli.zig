@@ -3,15 +3,14 @@ const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 const expect = std.testing.expect;
-const read = @import("read.zig");
 const array = std.ArrayList;
 const json = std.json;
 
 pub fn parseSeparator(value: []const u8) u8 {
     assert(value.len > 0);
-    if (std.mem.eql(u8, value, ",") or std.mem.eql(u8, value, "comma")) {
+    if (std.mem.eql(u8, value, "comma")) {
         return ',';
-    } else if (std.mem.eql(u8, value, "tab") or std.mem.eql(u8, value, "t")) {
+    } else if (std.mem.eql(u8, value, "tab")) {
         return '\t';
     } else {
         return value[0];

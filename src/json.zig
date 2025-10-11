@@ -15,8 +15,9 @@ const Vydia = struct {
 pub fn readFile(alloc: Allocator, file: *std.fs.File) ![]u8 {
     var result = try std.ArrayList(u8).initCapacity(alloc, 50);
 
+    var in_buf: [4096 * 10]u8 = undefined;
     while (true) {
-        const line = read.readLine(file) catch break;
+        const line = file.reader(&in_buf).interface.discardDelimiterExclusive('\n') catch break;
         _ = try result.appendSlice(alloc, line);
     }
     return try result.toOwnedSlice(alloc);

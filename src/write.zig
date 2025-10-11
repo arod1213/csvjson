@@ -3,7 +3,6 @@ const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 const expect = std.testing.expect;
-const read = @import("read.zig");
 const array = std.ArrayList;
 const stdout = std.fs.File.stdout;
 const json = std.json;

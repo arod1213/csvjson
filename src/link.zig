@@ -3,7 +3,6 @@ const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 const expect = std.testing.expect;
-const read = @import("read.zig");
 const array = std.ArrayList;
 const stdout = std.fs.File.stdout;
 const json = std.json;
@@ -13,22 +12,52 @@ pub fn linkHeaders(alloc: Allocator, heading: *const array([]const u8), data: *c
     var map = std.StringHashMap([]const u8).init(alloc);
     for (heading.items, 0..) |header, idx| {
         if (data.items.len <= idx) break;
-
-        const value = data.items[idx];
-        _ = try map.put(header, value);
+        _ = try map.put(header, data.items[idx]);
     }
     return map;
 }
 
-pub fn mapToJson(alloc: Allocator, map: *const std.StringHashMap([]const u8)) !json.Value {
+test "link header memory" {
+    const alloc = std.testing.allocator;
+    var arr = try std.ArrayList([]const u8).initCapacity(alloc, 4);
+    defer arr.deinit(alloc);
+    try arr.append(alloc, "row1");
+    try arr.append(alloc, "row2");
+    try arr.append(alloc, "row3");
+    try arr.append(alloc, "row4");
+
+    var map = try linkHeaders(alloc, &arr, &arr);
+    defer map.deinit();
+}
+
+pub fn mapToObject(alloc: Allocator, map: *const std.StringHashMap([]const u8)) !std.json.ObjectMap {
     var obj = std.json.ObjectMap.init(alloc);
 
     var iter = map.iterator();
     while (iter.next()) |val| {
-        const json_val = fmt.parseDynamicValue(val.value_ptr.*);
-        _ = try obj.put(val.key_ptr.*, json_val);
-    }
+        const value = try alloc.alloc(u8, val.value_ptr.*.len);
+        @memcpy(value, val.value_ptr.*);
+        const key = try alloc.alloc(u8, val.key_ptr.*.len);
+        @memcpy(key, val.key_ptr.*);
 
-    const json_obj = std.json.Value{ .object = obj };
-    return json_obj;
+        const json_val = fmt.parseDynamicValue(value);
+        _ = try obj.put(key, json_val);
+    }
+    return obj;
+}
+
+test "map to json memory" {
+    const alloc = std.testing.allocator;
+    var arr = try std.ArrayList([]const u8).initCapacity(alloc, 4);
+    defer arr.deinit(alloc);
+    try arr.append(alloc, "row1");
+    try arr.append(alloc, "row2");
+    try arr.append(alloc, "row3");
+    try arr.append(alloc, "row4");
+
+    var map = try linkHeaders(alloc, &arr, &arr);
+    defer map.deinit();
+
+    var obj = try mapToObject(alloc, &map);
+    defer obj.deinit();
 }

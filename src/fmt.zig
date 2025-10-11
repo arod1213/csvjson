@@ -3,7 +3,6 @@ const print = std.debug.print;
 const Allocator = std.mem.Allocator;
 const assert = std.debug.assert;
 const expect = std.testing.expect;
-const read = @import("read.zig");
 const array = std.ArrayList;
 const stdout = std.fs.File.stdout;
 const json = std.json;
@@ -49,5 +48,26 @@ pub fn getField(alloc: Allocator, line: []const u8, sep: u8, start_pos: *usize) 
 
     start_pos.* += idx + 1;
     const trimmed = std.mem.trim(u8, buf[0..idx], " \r\n");
-    return trimmed;
+
+    const result = try alloc.alloc(u8, trimmed.len);
+    @memcpy(result, trimmed);
+
+    alloc.free(buf);
+    return result;
+}
+
+test "get field" {
+    const alloc = std.testing.allocator;
+    const line = "giraffe,dog,cat,\"[alligator, crocodile]\"";
+    const sep = ',';
+
+    var start: usize = 0;
+    var answer = try getField(alloc, line, sep, &start);
+    _ = &answer;
+    defer alloc.free(answer);
+
+    const expected = "giraffe";
+
+    try expect(std.mem.eql(u8, answer, expected));
+    try expect(start == 8);
 }
