@@ -6,12 +6,7 @@ const print = std.debug.print;
 const write = csvjson.write;
 const Allocator = std.mem.Allocator;
 
-fn parse_csv(arena: *std.heap.ArenaAllocator, reader: *std.Io.Reader, writer: *std.Io.Writer) !void {
-    const alloc = arena.allocator();
-    defer {
-        _ = arena.reset(.retain_capacity);
-    }
-
+fn parse_csv(alloc: Allocator, reader: *std.Io.Reader, writer: *std.Io.Writer) !void {
     const args = try cli.Args().init();
     var csv_reader = try csvjson.CSVReader.init(alloc, reader, &args);
     defer csv_reader.deinit();
@@ -37,15 +32,14 @@ fn parse_csv(arena: *std.heap.ArenaAllocator, reader: *std.Io.Reader, writer: *s
 pub fn main() !void {
     var arena = std.heap.ArenaAllocator.init(std.heap.page_allocator);
     defer arena.deinit();
+    const alloc = arena.allocator();
 
-    var in_buf: [4096 * 10]u8 = undefined;
-    const cwd = std.fs.cwd();
-    var file = try cwd.openFile("aidan.csv", .{});
-    var reader = file.reader(&in_buf);
+    var in_buf: [4096 * 5]u8 = undefined;
+    var reader = std.fs.File.stdin().reader(&in_buf);
 
     var out_buf: [4096]u8 = undefined;
     var writer = std.fs.File.stdout().writer(&out_buf);
-    try parse_csv(&arena, &reader.interface, &writer.interface);
+    try parse_csv(alloc, &reader.interface, &writer.interface);
 }
 
 // TODO: this test just hangs ??
