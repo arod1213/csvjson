@@ -7,6 +7,18 @@ const array = std.ArrayList;
 const stdout = std.fs.File.stdout;
 const json = std.json;
 
+fn stringEscape(alloc: Allocator, line: []const u8) ![]const u8 {
+    if (line.len < 2) {
+        return line;
+    }
+    if (line[0] == '"' and line[line.len - 1] == '"') {
+        const slice = try alloc.alloc(u8, line.len - 2);
+        @memcpy(slice, line[1 .. line.len - 1]);
+        return slice;
+    }
+    return line;
+}
+
 // TODO: pass in separator here
 pub fn parseDynamicValue(alloc: Allocator, s: []const u8) !json.Value {
     if (s.len == 0 or std.mem.eql(u8, s, "null")) {
@@ -42,16 +54,15 @@ pub fn parseDynamicValue(alloc: Allocator, s: []const u8) !json.Value {
         return json.Value{ .array = items.toManaged(alloc) };
     }
 
-    // TODO: implement object parsing
+    // objects
     if (s[0] == '{' and s[s.len - 1] == '}') {
         const slice = s[1 .. s.len - 1];
         var obj = std.json.ObjectMap.init(alloc);
         var items = std.mem.splitAny(u8, slice, ",");
         while (items.next()) |item| {
-            // TODO: check for string escaped keys
             const idx = std.mem.indexOf(u8, item, ":") orelse continue;
-            const key = item[0..idx];
-            const value = item[idx + 1 ..];
+            const key = try stringEscape(alloc, item[0..idx]);
+            const value = try stringEscape(alloc, item[idx + 1 ..]);
 
             const json_val = parseDynamicValue(alloc, value) catch continue;
             try obj.put(key, json_val);
