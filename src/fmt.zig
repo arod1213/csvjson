@@ -41,9 +41,23 @@ pub fn parseDynamicValue(alloc: Allocator, s: []const u8) !json.Value {
 
         return json.Value{ .array = items.toManaged(alloc) };
     }
-    // if (s[0] == '{' and s[s.len - 1] == '}') {
+
     // TODO: implement object parsing
-    // }
+    if (s[0] == '{' and s[s.len - 1] == '}') {
+        const slice = s[1 .. s.len - 1];
+        var obj = std.json.ObjectMap.init(alloc);
+        var items = std.mem.splitAny(u8, slice, ",");
+        while (items.next()) |item| {
+            // TODO: check for string escaped keys
+            const idx = std.mem.indexOf(u8, item, ":") orelse continue;
+            const key = item[0..idx];
+            const value = item[idx + 1 ..];
+
+            const json_val = parseDynamicValue(alloc, value) catch continue;
+            try obj.put(key, json_val);
+        }
+        return json.Value{ .object = obj };
+    }
 
     return json.Value{ .string = s };
 }
