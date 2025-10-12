@@ -35,7 +35,7 @@ pub fn mapToObject(alloc: Allocator, map: *const std.StringHashMap([]const u8)) 
 
     var iter = map.iterator();
     while (iter.next()) |val| {
-        const json_val = fmt.parseDynamicValue(val.value_ptr.*);
+        const json_val = fmt.parseDynamicValue(alloc, val.value_ptr.*) catch continue;
         _ = try obj.put(val.key_ptr.*, json_val);
     }
     return obj;

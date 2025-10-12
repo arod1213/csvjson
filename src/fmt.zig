@@ -7,15 +7,20 @@ const array = std.ArrayList;
 const stdout = std.fs.File.stdout;
 const json = std.json;
 
-pub fn parseDynamicValue(s: []const u8) json.Value {
-    if (std.mem.eql(u8, s, "null")) {
+// TODO: pass in separator here
+pub fn parseDynamicValue(alloc: Allocator, s: []const u8) !json.Value {
+    if (s.len == 0 or std.mem.eql(u8, s, "null")) {
         return json.Value{ .null = {} };
-    } else if (std.mem.eql(u8, s, "true")) {
+    }
+
+    // bools
+    if (std.mem.eql(u8, s, "true")) {
         return json.Value{ .bool = true };
     } else if (std.mem.eql(u8, s, "false")) {
         return json.Value{ .bool = false };
     }
 
+    // nums
     if (std.fmt.parseInt(i64, s, 10)) |int_val| {
         return json.Value{ .integer = int_val };
     } else |_| {}
@@ -23,6 +28,22 @@ pub fn parseDynamicValue(s: []const u8) json.Value {
     if (std.fmt.parseFloat(f64, s)) |float_val| {
         return json.Value{ .float = float_val };
     } else |_| {}
+
+    if (s[0] == '[' and s[s.len - 1] == ']') {
+        const slice = s[1 .. s.len - 1];
+        var items = try std.ArrayList(json.Value).initCapacity(alloc, 10);
+        var values = std.mem.splitAny(u8, slice, ",");
+
+        while (values.next()) |x| {
+            const val = parseDynamicValue(alloc, x) catch continue;
+            items.append(alloc, val) catch continue;
+        }
+
+        return json.Value{ .array = items.toManaged(alloc) };
+    }
+    // if (s[0] == '{' and s[s.len - 1] == '}') {
+    // TODO: implement object parsing
+    // }
 
     return json.Value{ .string = s };
 }

@@ -90,11 +90,12 @@ test "collect fields" {
 fn collectObject(alloc: Allocator, line: []const u8, sep: u8, headers: *array([]const u8)) !std.json.ObjectMap {
     var data = try collectFields(alloc, line, sep);
     defer data.deinit(alloc);
-    defer {
-        for (data.items) |result| {
-            alloc.free(result);
-        }
-    }
+    // TODO: free items leads to corrupt memory later
+    // defer {
+    //     for (data.items) |result| {
+    //         alloc.free(result);
+    //     }
+    // }
 
     var map = try link.linkHeaders(alloc, headers, &data);
     defer map.deinit();
