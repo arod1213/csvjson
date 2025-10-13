@@ -41,6 +41,7 @@ pub fn parseDynamicValue(alloc: Allocator, s: []const u8) !json.Value {
         return json.Value{ .float = float_val };
     } else |_| {}
 
+    print("looking at |{s}|\n", .{s});
     if (s[0] == '[' and s[s.len - 1] == ']') {
         const slice = s[1 .. s.len - 1];
         var items = try std.ArrayList(json.Value).initCapacity(alloc, 10);
@@ -80,25 +81,28 @@ pub fn getField(alloc: Allocator, line: []const u8, sep: u8, start_pos: *usize) 
     if (line.len == 0 or start_pos.* >= line.len) return error.OutOfBounds;
 
     const slice = line[start_pos.*..];
-    print("trying to split |{s}|\n", .{slice});
     var buf = try alloc.alloc(u8, slice.len);
+    var buf_idx: usize = 0;
     var idx: usize = 0;
     var in_quotes = false;
 
     for (slice) |c| {
-        if (c == '"') {
+        if (c == '\"') {
             in_quotes = !in_quotes;
-            print("in quotes{any}\n", .{in_quotes});
+            idx += 1;
             continue;
         }
-        if (c == sep and !in_quotes) break;
+        if (c == sep and !in_quotes) {
+            break;
+        }
         if (c == '\n' or c == '\r') break;
-        buf[idx] = c;
+        buf[buf_idx] = c;
+        buf_idx += 1;
         idx += 1;
     }
 
     start_pos.* += idx + 1;
-    const trimmed = std.mem.trim(u8, buf[0..idx], " \r\n");
+    const trimmed = std.mem.trim(u8, buf[0..buf_idx], " \r\n");
 
     const result = try alloc.alloc(u8, trimmed.len);
     @memcpy(result, trimmed);
