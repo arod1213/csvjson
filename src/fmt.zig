@@ -54,29 +54,33 @@ pub fn parseDynamicValue(alloc: Allocator, s: []const u8) !json.Value {
         return json.Value{ .array = items.toManaged(alloc) };
     }
 
+    // TODO: fix object implementation (parsing from getField is incorrect)
     // objects
-    if (s[0] == '{' and s[s.len - 1] == '}') {
-        const slice = s[1 .. s.len - 1];
-        var obj = std.json.ObjectMap.init(alloc);
-        var items = std.mem.splitAny(u8, slice, ",");
-        while (items.next()) |item| {
-            const idx = std.mem.indexOf(u8, item, ":") orelse continue;
-            const key = try stringEscape(alloc, item[0..idx]);
-            const value = try stringEscape(alloc, item[idx + 1 ..]);
-
-            const json_val = parseDynamicValue(alloc, value) catch continue;
-            try obj.put(key, json_val);
-        }
-        return json.Value{ .object = obj };
-    }
+    // if (s[0] == '{' and s[s.len - 1] == '}') {
+    //     const slice = s[1 .. s.len - 1];
+    //     print("slice is {s}\n", .{slice});
+    //     var obj = std.json.ObjectMap.init(alloc);
+    //     var items = std.mem.splitAny(u8, slice, ",");
+    //     while (items.next()) |item| {
+    //         const idx = std.mem.indexOf(u8, item, ":") orelse continue;
+    //         const key = try stringEscape(alloc, item[0..idx]);
+    //         const value = try stringEscape(alloc, item[idx + 1 ..]);
+    //
+    //         const json_val = parseDynamicValue(alloc, value) catch continue;
+    //         try obj.put(key, json_val);
+    //     }
+    //     return json.Value{ .object = obj };
+    // }
 
     return json.Value{ .string = s };
 }
 
+// TODO: objects are improperly escaped
 pub fn getField(alloc: Allocator, line: []const u8, sep: u8, start_pos: *usize) ![]const u8 {
     if (line.len == 0 or start_pos.* >= line.len) return error.OutOfBounds;
 
     const slice = line[start_pos.*..];
+    print("trying to split |{s}|\n", .{slice});
     var buf = try alloc.alloc(u8, slice.len);
     var idx: usize = 0;
     var in_quotes = false;
@@ -84,6 +88,7 @@ pub fn getField(alloc: Allocator, line: []const u8, sep: u8, start_pos: *usize) 
     for (slice) |c| {
         if (c == '"') {
             in_quotes = !in_quotes;
+            print("in quotes{any}\n", .{in_quotes});
             continue;
         }
         if (c == sep and !in_quotes) break;
