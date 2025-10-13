@@ -41,7 +41,6 @@ pub fn parseDynamicValue(alloc: Allocator, s: []const u8) !json.Value {
         return json.Value{ .float = float_val };
     } else |_| {}
 
-    print("looking at |{s}|\n", .{s});
     if (s[0] == '[' and s[s.len - 1] == ']') {
         const slice = s[1 .. s.len - 1];
         var items = try std.ArrayList(json.Value).initCapacity(alloc, 10);
