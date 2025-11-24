@@ -101,18 +101,19 @@ cat data.csv | csvjson -o=50 -l=100 -m  # Lines 50-150 as JSONL
 ## Output Formats
 
 ### Pretty-printed JSON (default)
-
-json
-
 ```json
 [
   {
     "name": "John Doe",
+    "favorite_color": null,
+    "languages": ["French", "English"],
     "age": 30,
     "email": "john@example.com"
   },
   {
     "name": "Jane Smith",
+    "favorite_color": "blue",
+    "languages": ["English"],
     "age": 25,
     "email": "jane@example.com"
   }
@@ -120,10 +121,18 @@ json
 ```
 
 ### JSONL format (`-m` flag)
-
-json
-
 ```json
-{"name":"John Doe","age":30,"email":"john@example.com"}
-{"name":"Jane Smith","age":25,"email":"jane@example.com"}
+{"name":"John Doe","favorite_color":null,"languages":["French","English"],"age":30,"email":"john@example.com"}
+{"name":"Jane Smith","favorite_color":"blue","languages":["English"],"age":25,"email":"jane@example.com"}
+```
+
+### Pretty-printed JSON with types (`-t` flag)
+```json
+{
+    "name": "String",
+    "favorite_color": "Null | String",
+    "languages": "Srray of String",
+    "age": "Int",
+    "email": "String"
+}
 ```
