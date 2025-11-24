@@ -12,6 +12,7 @@ pub const fmt = @import("fmt.zig");
 pub const write = @import("write.zig");
 pub const link = @import("link.zig");
 pub const cli = @import("cli.zig");
+pub const types = @import("types.zig");
 
 pub const CSVReader = struct {
     alloc: Allocator,

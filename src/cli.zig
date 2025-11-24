@@ -25,6 +25,7 @@ pub fn Args() type {
         line_count: ?usize = null, // null for file read
         minified: bool = false,
         separator: u8 = ',',
+        types: bool = false,
 
         pub fn init() !@This() {
             var self = @This(){};
@@ -35,15 +36,16 @@ pub fn Args() type {
                 const text: []const u8 = std.mem.span(arg);
                 if (text.len < 2 or text[0] != '-') continue;
 
-                const flag = text[1];
+                const flag = std.ascii.toLower(text[1]);
                 const eq_index = std.mem.indexOfScalar(u8, text, '=');
                 const value = if (eq_index) |i| text[i + 1 ..] else "";
 
                 switch (flag) {
-                    'o', 'O' => self.offset = try std.fmt.parseInt(usize, value, 10),
-                    'l', 'L' => self.line_count = try std.fmt.parseInt(usize, value, 10),
-                    'm', 'M' => self.minified = true,
-                    's', 'S' => self.separator = parseSeparator(value),
+                    'o' => self.offset = try std.fmt.parseInt(usize, value, 10),
+                    'l' => self.line_count = try std.fmt.parseInt(usize, value, 10),
+                    'm' => self.minified = true,
+                    's' => self.separator = parseSeparator(value),
+                    't' => self.types = true,
                     else => {},
                 }
             }
