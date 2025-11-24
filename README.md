@@ -131,7 +131,7 @@ cat data.csv | csvjson -o=50 -l=100 -m  # Lines 50-150 as JSONL
 {
     "name": "String",
     "favorite_color": "Null | String",
-    "languages": "Srray of String",
+    "languages": "Array of String",
     "age": "Int",
     "email": "String"
 }
