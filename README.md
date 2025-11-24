@@ -1,8 +1,129 @@
-CLI args:
--l (line count to read) : usize
--o (start offset) : usize
--m (minified) : bool
--s (separator) : char
+# CSVJSON
 
-ex.) cat myfile.csv | csvjson -l=10 -o=20 -m -s=,
-yields -> read ten lines of a comma separated file starting from the 20th line + print each object per line
+A command-line utility for serializing CSV/TSV files into readable JSON format.
+
+## Overview
+
+CSVJSON converts comma-separated values (CSV) and tab-separated values (TSV) files into JSON format, providing flexible options for output formatting and data processing.
+
+## Features
+
+-   Convert CSV/TSV files to JSON
+-   Optional type definitions for JSON keys
+-   Customizable delimiters for various file formats
+-   Line-based processing with offset support
+-   Multiple output formats (pretty-printed JSON or JSONL)
+
+## Flags
+
+### `-t` / `-T`
+
+Display type definitions for each key in the serialized JSON object.
+
+bash
+
+```bash
+cat input.csv | csvjson -t
+```
+
+### `-s`
+
+Set the delimiter/separator for the input file.
+
+**Examples:**
+
+-   CSV: `-s=','`
+-   TSV: `-s=$'\t'`
+
+bash
+
+```bash
+cat input.csv | csvjson -s=','
+cat input.tsv | csvjson -s=$'\t'
+```
+
+### `-l`
+
+Set the total number of lines to read from the input file.
+
+bash
+
+```bash
+cat input.csv | csvjson -l=100  # Read only first 100 lines
+```
+
+### `-o`
+
+Set the offset for which line to start reading from.
+
+bash
+
+```bash
+cat input.csv | csvjson -o=10  # Skip first 10 lines
+```
+
+### `-m`
+
+Output JSONL (JSON Lines) format instead of pretty-printed JSON. Each line contains a separate JSON object.
+
+bash
+
+```bash
+cat input.csv | csvjson -m
+```
+
+## Usage Examples
+
+### Basic CSV conversion
+
+bash
+
+```bash
+cat input.csv | csvjson
+```
+
+### Convert TSV with type definitions
+
+bash
+
+```bash
+input.tsv | csvjson -t -s=$'\t'
+```
+
+### Process specific range with JSONL output
+
+bash
+
+```bash
+cat data.csv | csvjson -o=50 -l=100 -m  # Lines 50-150 as JSONL
+```
+
+## Output Formats
+
+### Pretty-printed JSON (default)
+
+json
+
+```json
+[
+  {
+    "name": "John Doe",
+    "age": 30,
+    "email": "john@example.com"
+  },
+  {
+    "name": "Jane Smith",
+    "age": 25,
+    "email": "jane@example.com"
+  }
+]
+```
+
+### JSONL format (`-m` flag)
+
+json
+
+```json
+{"name":"John Doe","age":30,"email":"john@example.com"}
+{"name":"Jane Smith","age":25,"email":"jane@example.com"}
+```
