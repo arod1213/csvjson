@@ -26,7 +26,7 @@ bash
 cat input.csv | csvjson -t
 ```
 
-### `-s`
+### `-s` / `-S`
 
 Set the delimiter/separator for the input file.
 
@@ -42,7 +42,7 @@ cat input.csv | csvjson -s=','
 cat input.tsv | csvjson -s=$'\t'
 ```
 
-### `-l`
+### `-l` / `-L`
 
 Set the total number of lines to read from the input file.
 
@@ -52,7 +52,7 @@ bash
 cat input.csv | csvjson -l=100  # Read only first 100 lines
 ```
 
-### `-o`
+### `-o` / `-O`
 
 Set the offset for which line to start reading from.
 
@@ -62,7 +62,7 @@ bash
 cat input.csv | csvjson -o=10  # Skip first 10 lines
 ```
 
-### `-m`
+### `-m` / `-M`
 
 Output JSONL (JSON Lines) format instead of pretty-printed JSON. Each line contains a separate JSON object.
 
