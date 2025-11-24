@@ -35,32 +35,30 @@ fn json_to_str(alloc: Allocator, value: *const Value) ![]const u8 {
     };
 }
 
-pub fn parse_types(alloc: Allocator, list: ArrayList(std.json.ObjectMap)) !*std.StringHashMap([]const u8) {
-    var type_map = std.StringHashMap(*ArrayList([]const u8)).init(alloc);
+pub fn save_types(alloc: Allocator, type_map: *std.StringHashMap(*ArrayList([]const u8)), obj: std.json.ObjectMap) !void {
+    var iter = obj.iterator();
+    while (iter.next()) |pair| {
+        const key = pair.key_ptr;
+        const value = pair.value_ptr;
 
-    for (list.items) |item| {
-        var iter = item.iterator();
-        while (iter.next()) |pair| {
-            const key = pair.key_ptr;
-            const value = pair.value_ptr;
+        var pair_info = type_map.get(key.*);
+        _ = &pair_info;
 
-            var pair_info = type_map.get(key.*);
-            _ = &pair_info;
-
-            if (pair_info != null) {
-                const ptr = pair_info.?;
-                const json_str = try json_to_str(alloc, value);
-                try store_info(alloc, json_str, ptr);
-            } else {
-                const ptr = try alloc.create(ArrayList([]const u8));
-                ptr.* = try ArrayList([]const u8).initCapacity(alloc, 2);
-                try type_map.put(key.*, ptr);
-                const json_str = try json_to_str(alloc, value);
-                try store_info(alloc, json_str, ptr);
-            }
+        if (pair_info != null) {
+            const ptr = pair_info.?;
+            const json_str = try json_to_str(alloc, value);
+            try store_info(alloc, json_str, ptr);
+        } else {
+            const ptr = try alloc.create(ArrayList([]const u8));
+            ptr.* = try ArrayList([]const u8).initCapacity(alloc, 2);
+            try type_map.put(key.*, ptr);
+            const json_str = try json_to_str(alloc, value);
+            try store_info(alloc, json_str, ptr);
         }
     }
+}
 
+pub fn flatten_type_map(alloc: Allocator, type_map: std.StringHashMap(*ArrayList([]const u8))) !*std.StringHashMap([]const u8) {
     var type_map_flat = std.StringHashMap([]const u8).init(alloc);
     var map_iter = type_map.iterator();
     while (map_iter.next()) |map_pair| {

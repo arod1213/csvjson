@@ -28,10 +28,8 @@ fn read_vals(csv: *csvjson.CSVReader, writer: *std.Io.Writer, args: *const cli.A
 }
 
 fn read_types(alloc: Allocator, csv: *csvjson.CSVReader, writer: *std.Io.Writer, args: *const cli.Args()) !void {
-    var list = try std.ArrayList(std.json.ObjectMap).initCapacity(alloc, 10);
-    defer {
-        list.deinit(alloc);
-    }
+    var type_map = std.StringHashMap(*ArrayList([]const u8)).init(alloc);
+    defer type_map.deinit();
 
     var idx: usize = 0;
     while (true) : (idx += 1) {
@@ -41,15 +39,16 @@ fn read_types(alloc: Allocator, csv: *csvjson.CSVReader, writer: *std.Io.Writer,
             }
         }
         const obj = csv.next() catch break;
-        try list.append(alloc, obj);
+        types.save_types(alloc, &type_map, obj) catch {
+            continue;
+        };
     }
 
-    const map = try types.parse_types(alloc, list);
+    const map = try types.flatten_type_map(alloc, type_map);
     var obj = try link.mapToObject(alloc, map);
     const json_obj = std.json.Value{ .object = obj };
 
     try write.stringify(writer, &json_obj, args.minified);
-    // _ = try writer.writeByte('\n');
     obj.deinit();
 
     try writer.flush();
