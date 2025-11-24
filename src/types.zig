@@ -6,29 +6,7 @@ const HashMap = std.HashMap;
 const assert = std.debug.assert;
 const expect = std.testing.expect;
 const print = std.debug.print;
-const link = @import("csvjson").link;
 
-// const ValType = enum {
-//     int,
-//     float,
-//     boolean,
-//     none,
-//     string,
-//
-//     pub fn to_json(self: @This()) !std.json.Value {
-//         const text = switch (self) {
-//             .int => "INT",
-//             .float => "FLOAT",
-//             .none => "NULL",
-//             .string => "STRING",
-//             .boolean => "BOOL",
-//         };
-//         return std.json.Value{
-//             .string = text,
-//         };
-//     }
-// };
-//
 fn json_to_str(alloc: Allocator, value: *const Value) ![]const u8 {
     return switch (value.*) {
         .string => "String",
@@ -38,20 +16,21 @@ fn json_to_str(alloc: Allocator, value: *const Value) ![]const u8 {
         .null => "Null",
         .number_string => "Num string",
         .array => |x| array_blk: {
-            var list = try ArrayList([]const u8).initCapacity(alloc, 3);
-            defer list.deinit(alloc);
+            var new_list = try ArrayList([]const u8).initCapacity(alloc, 3);
+            defer new_list.deinit(alloc);
 
             for (x.items) |inside| {
                 const st = try json_to_str(alloc, &inside);
-                try store_info(alloc, st, &list);
+                try store_info(alloc, st, &new_list);
             }
-
-            const slices = try list.toOwnedSlice(alloc);
+            const slices = try new_list.toOwnedSlice(alloc);
             const flat = try std.mem.join(alloc, " | ", slices);
 
             const concat = try std.fmt.allocPrint(alloc, "{s}{s}", .{ "Array of ", flat });
             break :array_blk concat;
         },
+
+        // this should be unreachable as the objects will be parsed already
         .object => "Obj",
     };
 }
