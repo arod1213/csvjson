@@ -16,14 +16,15 @@ CSVJSON converts comma-separated values (CSV) and tab-separated values (TSV) fil
 
 ## Flags
 
-### `-t` / `-T`
+### `-r`
 
-Display type definitions for each key in the serialized JSON object.
+Choose read type (all, keys, types)
+Defaults to all
 
 bash
 
 ```bash
-cat input.csv | csvjson -t
+cat input.csv | csvjson -r types
 ```
 
 ### `-s` / `-S`
@@ -32,14 +33,14 @@ Set the delimiter/separator for the input file.
 
 **Examples:**
 
--   CSV: `-s=','`
--   TSV: `-s=$'\t'`
+-   CSV: `-s ','`
+-   TSV: `-s $'\t'`
 
 bash
 
 ```bash
-cat input.csv | csvjson -s=','
-cat input.tsv | csvjson -s=$'\t'
+cat input.csv | csvjson -s ','
+cat input.tsv | csvjson -s $'\t'
 ```
 
 ### `-l` / `-L`
@@ -62,7 +63,7 @@ bash
 cat input.csv | csvjson -o=10  # Skip first 10 lines
 ```
 
-### `-m` / `-M`
+### `-m`
 
 Output JSONL (JSON Lines) format instead of pretty-printed JSON. Each line contains a separate JSON object.
 
