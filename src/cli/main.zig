@@ -57,8 +57,7 @@ pub const Args = struct {
         }
 
         {
-            const x = try args.parseField(alloc, bool, &input, "-m");
-            if (x.items.len > 0) self.minified = x.items[0];
+            self.minified = if (input.get("-m") == null) false else true;
         }
 
         {
