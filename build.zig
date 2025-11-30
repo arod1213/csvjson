@@ -3,11 +3,19 @@ const std = @import("std");
 pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
-    const mod = b.addModule("csvjson", .{
-        .root_source_file = b.path("src/root.zig"),
+
+    const xsv_reader = b.addModule("xsv_reader", .{
+        .root_source_file = b.path("src/reader/xsv.zig"),
         .target = target,
         .optimize = .ReleaseFast,
     });
+
+    const commands = b.addModule("commands", .{
+        .root_source_file = b.path("src/commands/main.zig"),
+        .target = target,
+        .optimize = .ReleaseFast,
+    });
+    commands.addImport("xsv_reader", xsv_reader);
 
     const exe = b.addExecutable(.{
         .name = "csvjson",
@@ -16,7 +24,8 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
             .imports = &.{
-                .{ .name = "csvjson", .module = mod },
+                .{ .name = "xsv_reader", .module = xsv_reader },
+                .{ .name = "commands", .module = commands },
             },
         }),
     });
@@ -34,7 +43,7 @@ pub fn build(b: *std.Build) void {
     }
 
     const mod_tests = b.addTest(.{
-        .root_module = mod,
+        .root_module = xsv_reader,
     });
 
     const run_mod_tests = b.addRunArtifact(mod_tests);
