@@ -2,6 +2,7 @@ const std = @import("std");
 const stdin = std.fs.File.stdin;
 const print = std.debug.print;
 
+const cli = @import("cli");
 const xsv = @import("xsv_reader");
 const commands = @import("commands");
 
@@ -10,7 +11,10 @@ const Value = std.json.Value;
 const ArrayList = std.ArrayList;
 
 fn parse_csv(alloc: Allocator, reader: *std.Io.Reader, writer: *std.Io.Writer) !void {
-    const args = try xsv.Args().init();
+    const input = try cli.Args.fromArgs(alloc);
+    const args = input.into_reader_args();
+
+    // const args = try xsv.args.Args().fromArgs();
     var csv_reader = try xsv.CSVReader.init(alloc, reader, &args);
     defer csv_reader.deinit();
 

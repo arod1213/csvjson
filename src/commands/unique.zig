@@ -8,6 +8,7 @@ const ArrayList = std.ArrayList;
 const HashMap = std.StringHashMap;
 
 const xsv = @import("xsv_reader");
+const input = xsv.args.Args();
 const types = xsv.types;
 const link = xsv.link;
 const write = xsv.write;

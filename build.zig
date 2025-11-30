@@ -5,10 +5,17 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
 
     const xsv_reader = b.addModule("xsv_reader", .{
-        .root_source_file = b.path("src/reader/xsv.zig"),
+        .root_source_file = b.path("src/reader/main.zig"),
         .target = target,
         .optimize = .ReleaseFast,
     });
+
+    const cli = b.addModule("cli", .{
+        .root_source_file = b.path("src/cli/main.zig"),
+        .target = target,
+        .optimize = .ReleaseFast,
+    });
+    cli.addImport("xsv_reader", xsv_reader);
 
     const commands = b.addModule("commands", .{
         .root_source_file = b.path("src/commands/main.zig"),
@@ -24,6 +31,7 @@ pub fn build(b: *std.Build) void {
             .target = target,
             .optimize = optimize,
             .imports = &.{
+                .{ .name = "cli", .module = cli },
                 .{ .name = "xsv_reader", .module = xsv_reader },
                 .{ .name = "commands", .module = commands },
             },

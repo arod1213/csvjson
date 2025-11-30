@@ -10,72 +10,20 @@ pub const fmt = @import("./fmt.zig");
 pub const write = @import("./write.zig");
 pub const link = @import("./link.zig");
 pub const types = @import("./types.zig");
-
-pub fn parseSeparator(value: []const u8) u8 {
-    assert(value.len > 0);
-    if (std.mem.eql(u8, value, "comma")) {
-        return ',';
-    } else if (std.mem.eql(u8, value, "tab")) {
-        return '\t';
-    } else {
-        return value[0];
-    }
-}
-
-pub const ReadType = enum { All, Types, Keys };
-pub fn Args() type {
-    return struct {
-        offset: usize = 0,
-        line_count: ?usize = null,
-        minified: bool = false,
-        separator: u8 = ',',
-        read_type: ReadType = .All,
-
-        pub fn default() !@This() {
-            return @This(){};
-        }
-
-        pub fn init() !@This() {
-            var self = @This(){};
-            const args = std.os.argv;
-
-            // TODO: make this windowed (2 args at a time)
-            for (args) |arg| {
-                const text: []const u8 = std.mem.span(arg);
-                if (text.len < 2 or text[0] != '-') continue;
-
-                const flag = std.ascii.toLower(text[1]);
-                const eq_index = std.mem.indexOfScalar(u8, text, '=');
-                const value = if (eq_index) |i| text[i + 1 ..] else "";
-
-                switch (flag) {
-                    'o' => self.offset = try std.fmt.parseInt(usize, value, 10),
-                    'l' => self.line_count = try std.fmt.parseInt(usize, value, 10),
-                    'm' => self.minified = true,
-                    's' => self.separator = parseSeparator(value),
-                    'r' => {
-                        self.read_type = if (std.meta.stringToEnum(ReadType, value)) |v| v else .All;
-                    },
-                    else => {},
-                }
-            }
-
-            return self;
-        }
-    };
-}
+pub const args = @import("./args.zig");
 
 pub const CSVReader = struct {
     alloc: Allocator,
+    input: *const args.Args(),
     reader: *std.Io.Reader,
     headers: std.ArrayList([]const u8),
-    done: bool = false,
-    line_count: usize = 0,
-    args: *const Args(),
-    separator: u8,
 
-    pub fn init(alloc: Allocator, reader: *std.Io.Reader, args: *const Args()) !@This() {
-        const sep = args.separator;
+    separator: u8,
+    line_count: usize = 0,
+    done: bool = false,
+
+    pub fn init(alloc: Allocator, reader: *std.Io.Reader, arg_list: *const args.Args()) !@This() {
+        const sep = arg_list.separator;
 
         const heading = try reader.takeDelimiterExclusive('\n');
         const headers = try collectFields(alloc, heading, sep);
@@ -84,7 +32,7 @@ pub const CSVReader = struct {
             .alloc = alloc,
             .reader = reader,
             .headers = headers,
-            .args = args,
+            .input = arg_list,
             .separator = sep,
         };
     }
@@ -96,7 +44,7 @@ pub const CSVReader = struct {
     pub fn next(self: *@This()) !std.json.ObjectMap {
         self.line_count += 1;
 
-        while (self.line_count <= self.args.offset) {
+        while (self.line_count <= self.input.offset) {
             _ = try self.reader.takeDelimiterExclusive('\n');
             self.line_count += 1;
         }

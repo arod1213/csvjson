@@ -7,11 +7,12 @@ const expect = std.testing.expect;
 const ArrayList = std.ArrayList;
 
 const xsv = @import("xsv_reader");
+const input = xsv.args.Args();
 const types = xsv.types;
 const link = xsv.link;
 const write = xsv.write;
 
-pub fn read_vals(csv: *xsv.CSVReader, writer: *std.Io.Writer, args: *const xsv.Args()) !void {
+pub fn read_vals(csv: *xsv.CSVReader, writer: *std.Io.Writer, args: *const input) !void {
     var idx: usize = 0;
     while (true) : (idx += 1) {
         if (args.line_count) |lc| {

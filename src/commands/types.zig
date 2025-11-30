@@ -7,11 +7,12 @@ const expect = std.testing.expect;
 const ArrayList = std.ArrayList;
 
 const xsv = @import("xsv_reader");
+const input = xsv.args.Args();
 const types = xsv.types;
 const link = xsv.link;
 const write = xsv.write;
 
-pub fn read_types(alloc: Allocator, csv: *xsv.CSVReader, writer: *std.Io.Writer, args: *const xsv.Args()) !void {
+pub fn read_types(alloc: Allocator, csv: *xsv.CSVReader, writer: *std.Io.Writer, args: *const input) !void {
     var type_map = std.StringHashMap(*ArrayList([]const u8)).init(alloc);
     defer type_map.deinit();
 
