@@ -24,7 +24,21 @@ Defaults to all
 bash
 
 ```bash
+cat input.csv | csvjson -r all
 cat input.csv | csvjson -r types
+csvjson -r keys -f ./*.csv
+```
+
+### `-r keys`
+```bash
+# finds all shared keys for all csvs in current directory
+csvjson -r keys -f ./*.csv
+
+# finds all keys which at least 5 files share in common
+csvjson -r keys -f ./*.csv -l 5
+
+# finds all keys
+csvjson -r keys -f ./*.csv -l 1
 ```
 
 ### `-s` / `-S`
