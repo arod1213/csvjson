@@ -30,7 +30,7 @@ pub fn read_types(alloc: Allocator, csv: *xsv.CSVReader, writer: *std.Io.Writer,
     }
 
     const map = try types.flatten_type_map(alloc, type_map);
-    var obj = try link.mapToObject(alloc, map);
+    var obj = try link.mapToObject([]const u8, alloc, map);
     const json_obj = std.json.Value{ .object = obj };
 
     try write.stringify(writer, &json_obj, args.minified);

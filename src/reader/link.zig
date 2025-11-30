@@ -30,12 +30,12 @@ test "link header memory" {
     defer map.deinit();
 }
 
-pub fn mapToObject(alloc: Allocator, map: *const std.StringHashMap([]const u8)) !std.json.ObjectMap {
+pub fn mapToObject(comptime T: type, alloc: Allocator, map: *const std.StringHashMap(T)) !std.json.ObjectMap {
     var obj = std.json.ObjectMap.init(alloc);
 
     var iter = map.iterator();
     while (iter.next()) |val| {
-        const json_val = fmt.parseDynamicValue(alloc, val.value_ptr.*) catch continue;
+        const json_val = fmt.parseDynamicValue(T, alloc, val.value_ptr.*) catch continue;
         _ = try obj.put(val.key_ptr.*, json_val);
     }
     return obj;
@@ -53,6 +53,6 @@ test "map to json memory" {
     var map = try linkHeaders(alloc, &arr, &arr);
     defer map.deinit();
 
-    var obj = try mapToObject(alloc, &map);
+    var obj = try mapToObject([]const u8, alloc, &map);
     defer obj.deinit();
 }

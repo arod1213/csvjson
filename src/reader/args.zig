@@ -17,14 +17,14 @@ pub fn parseSeparator(value: []const u8) u8 {
     }
 }
 
-pub const ReadType = enum { All, Types, Keys };
+pub const ReadType = enum { all, types, keys };
 pub fn Args() type {
     return struct {
         offset: usize = 0,
         line_count: ?usize = null,
         minified: bool = false,
         separator: u8 = ',',
-        read_type: ReadType = .All,
+        read_type: ReadType = .all,
 
         pub fn default() !@This() {
             return @This(){};
@@ -49,7 +49,7 @@ pub fn Args() type {
                     'm' => self.minified = true,
                     's' => self.separator = parseSeparator(value),
                     'r' => {
-                        self.read_type = if (std.meta.stringToEnum(ReadType, value)) |v| v else .All;
+                        self.read_type = if (std.meta.stringToEnum(ReadType, value)) |v| v else .all;
                     },
                     else => {},
                 }

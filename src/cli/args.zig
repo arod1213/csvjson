@@ -28,6 +28,7 @@ pub fn argsToMap(alloc: Allocator) !HashMap(ArrayList([]const u8)) {
         const text: []const u8 = std.mem.span(arg);
         if (std.mem.startsWith(u8, text, "-")) {
             last_key = text;
+            continue;
         }
         if (last_key) |key| {
             var entry = try map.getOrPut(key);

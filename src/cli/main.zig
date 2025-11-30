@@ -31,7 +31,7 @@ pub const Args = struct {
     line_count: ?usize = null,
     minified: bool = false,
     separator: u8 = ',',
-    read_type: ReadType = .All,
+    read_type: ReadType = .all,
 
     files: ?ArrayList([]const u8) = null,
 

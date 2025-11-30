@@ -20,7 +20,7 @@ fn stringEscape(alloc: Allocator, line: []const u8) ![]const u8 {
 }
 
 // TODO: pass in separator here
-pub fn parseDynamicValue(alloc: Allocator, s: []const u8) !json.Value {
+fn parseString(alloc: Allocator, s: []const u8) !json.Value {
     if (s.len == 0 or std.mem.eql(u8, s, "null")) {
         return json.Value{ .null = {} };
     }
@@ -47,7 +47,7 @@ pub fn parseDynamicValue(alloc: Allocator, s: []const u8) !json.Value {
         var values = std.mem.splitAny(u8, slice, ",");
 
         while (values.next()) |x| {
-            const val = parseDynamicValue(alloc, x) catch continue;
+            const val = parseString(alloc, x) catch continue;
             items.append(alloc, val) catch continue;
         }
 
@@ -73,6 +73,28 @@ pub fn parseDynamicValue(alloc: Allocator, s: []const u8) !json.Value {
     // }
 
     return json.Value{ .string = s };
+}
+pub fn parseDynamicValue(comptime T: type, alloc: Allocator, s: T) !json.Value {
+    const info = @typeInfo(T);
+    return switch (info) {
+        .pointer => |p| if (p.size == .slice and p.child == u8)
+            try parseString(alloc, s)
+        else
+            unreachable,
+        .int => json.Value{ .integer = blk: {
+            const x: i64 = @intCast(s);
+            break :blk x;
+        } },
+        .float => json.Value{ .float = s },
+        .array => json.Value{ .array = s },
+        .bool => json.Value{ .bool = s },
+        .null => json.Value{.null},
+        .optional => |x| if (x == null)
+            json.Value{.null}
+        else
+            try parseDynamicValue(x, alloc, s.?),
+        else => unreachable,
+    };
 }
 
 // TODO: objects are improperly escaped

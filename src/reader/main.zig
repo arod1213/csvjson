@@ -94,7 +94,7 @@ fn collectObject(alloc: Allocator, line: []const u8, sep: u8, headers: *array([]
     var map = try link.linkHeaders(alloc, headers, &data);
     defer map.deinit();
 
-    return try link.mapToObject(alloc, &map);
+    return try link.mapToObject([]const u8, alloc, &map);
 }
 
 test "mem" {
