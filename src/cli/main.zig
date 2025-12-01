@@ -94,11 +94,17 @@ pub const Args = struct {
         }
 
         {
-            const x = args.parseField(alloc, u8, &input, "-s") catch {
+            const x = args.parseField(alloc, []const u8, &input, "-s") catch {
                 errorMsg(&.{"Error: separator is not a valid character"});
                 std.process.exit(0);
             };
-            if (x.items.len > 0) self.separator = x.items[0];
+            if (x.items.len > 0) {
+                assert(x.items[0].len != 0);
+                if (x.items[0].len != 1) {
+                    errorMsg(&.{"Warning: separator will be treated as a single character"});
+                }
+                self.separator = x.items[0][0];
+            }
         }
 
         return self;

@@ -11,7 +11,7 @@ pub fn parseField(alloc: Allocator, comptime T: type, args: *const HashMap(Array
     var list = try ArrayList(T).initCapacity(alloc, 3);
     if (args.get(key)) |vals| {
         for (vals.items) |item| {
-            if (make_type(T, item)) |x| {
+            if (makeType(T, item)) |x| {
                 try list.append(alloc, x);
             } else {
                 return error.ParseError;
@@ -45,7 +45,7 @@ pub fn argsToMap(alloc: Allocator) !HashMap(ArrayList([]const u8)) {
 }
 
 pub const ParseError = error{ InvalidBool, InvalidEnum };
-fn make_type(comptime T: type, val: []const u8) ?T {
+fn makeType(comptime T: type, val: []const u8) ?T {
     const info = @typeInfo(T);
     return switch (info) {
         .pointer => |p| if (p.size == .slice and p.child == u8)
@@ -65,32 +65,32 @@ test "make type" {
     {
         const a = "56";
         const b: usize = 56;
-        try expect(make_type(usize, a) == b);
+        try expect(makeType(usize, a) == b);
     }
     {
         const x = enum { other, thing };
         const a = "other";
         const b = .other;
-        try expect(make_type(x, a) == b);
+        try expect(makeType(x, a) == b);
     }
     {
         const a = "5.7";
         const b: f64 = 5.7;
-        try expect(make_type(f64, a) == b);
+        try expect(makeType(f64, a) == b);
     }
     {
         const a = "true";
         const b = true;
-        try expect(make_type(bool, a) == b);
+        try expect(makeType(bool, a) == b);
     }
     {
         const a = "false";
         const b = false;
-        try expect(make_type(bool, a) == b);
+        try expect(makeType(bool, a) == b);
     }
     {
         const a = "fsle";
-        const answer = make_type(bool, a);
+        const answer = makeType(bool, a);
         try expect(answer == null);
     }
 }
