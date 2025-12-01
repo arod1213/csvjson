@@ -13,6 +13,8 @@ pub fn parseField(alloc: Allocator, comptime T: type, args: *const HashMap(Array
         for (vals.items) |item| {
             if (make_type(T, item)) |x| {
                 try list.append(alloc, x);
+            } else {
+                return error.ParseError;
             }
         }
     }

@@ -34,6 +34,12 @@ pub fn help() void {
     print("-m: if enabled, print minimized jsonl\n", .{});
 }
 
+pub fn errorMsg(msgs: []const []const u8) void {
+    for (msgs) |msg| {
+        print("{s}\n", .{msg});
+    }
+}
+
 pub const Args = struct {
     offset: usize = 0,
     line_count: ?usize = null,
@@ -58,16 +64,28 @@ pub const Args = struct {
 
         self.files = try args.parseField(alloc, []const u8, &input, "-f");
         {
-            const x = try args.parseField(alloc, ReadType, &input, "-r");
+            const x = args.parseField(alloc, ReadType, &input, "-r") catch {
+                errorMsg(&.{
+                    "Error: read type could not be parsed",
+                    "Valid options: all | types | keys",
+                });
+                std.process.exit(0);
+            };
             if (x.items.len > 0) self.read_type = x.items[0];
         }
         {
-            const x = try args.parseField(alloc, usize, &input, "-o");
+            const x = args.parseField(alloc, usize, &input, "-o") catch {
+                errorMsg(&.{"Error: offset is not an int"});
+                std.process.exit(0);
+            };
             if (x.items.len > 0) self.offset = x.items[0];
         }
 
         {
-            const x = try args.parseField(alloc, usize, &input, "-l");
+            const x = args.parseField(alloc, usize, &input, "-l") catch {
+                errorMsg(&.{"Error: line count is not an int"});
+                std.process.exit(0);
+            };
             if (x.items.len > 0) self.line_count = x.items[0];
         }
 
@@ -76,7 +94,10 @@ pub const Args = struct {
         }
 
         {
-            const x = try args.parseField(alloc, u8, &input, "-s");
+            const x = args.parseField(alloc, u8, &input, "-s") catch {
+                errorMsg(&.{"Error: separator is not a valid character"});
+                std.process.exit(0);
+            };
             if (x.items.len > 0) self.separator = x.items[0];
         }
 
