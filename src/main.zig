@@ -26,11 +26,11 @@ fn parse_csv(alloc: Allocator, writer: *std.Io.Writer) !void {
             try commands.read.read_vals(&csv_reader, writer, &args);
         },
         .field => {
-            if (input.files == null or input.files.?.items.len == 0) {
+            if (input.files == null or input.files.?.len == 0) {
                 _ = try writer.write("Error: please provide files to read\n");
                 break :blk;
             }
-            for (input.files.?.items) |path| {
+            for (input.files.?) |path| {
                 if (args.field_names == null or args.field_names.?.len == 0) {
                     _ = try writer.write("Error: please provide a field name\n");
                     break :blk;
@@ -47,7 +47,7 @@ fn parse_csv(alloc: Allocator, writer: *std.Io.Writer) !void {
             try commands.types.read_types(alloc, &csv_reader, writer, &args);
         },
         .key => {
-            if (input.files == null or input.files.?.items.len == 0) {
+            if (input.files == null or input.files.?.len == 0) {
                 _ = try writer.write("Error: please provide files to read\n");
                 break :blk;
             }
@@ -56,14 +56,14 @@ fn parse_csv(alloc: Allocator, writer: *std.Io.Writer) !void {
             var map = HashMap(usize).init(alloc);
             defer map.deinit();
 
-            for (files.items) |path| {
+            for (files) |path| {
                 try commands.unique.read_keys(alloc, &args, path, &map);
             }
 
             var iter = map.iterator();
             while (iter.next()) |set| {
                 const key, const val = .{ set.key_ptr, set.value_ptr };
-                const limit = if (args.line_count) |l| l else files.items.len;
+                const limit = if (args.line_count) |l| l else files.len;
                 if (val.* < limit) {
                     _ = map.remove(key.*);
                 }
