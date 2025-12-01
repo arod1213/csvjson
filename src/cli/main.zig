@@ -101,7 +101,8 @@ pub const Args = struct {
             if (x.items.len > 0) {
                 assert(x.items[0].len != 0);
                 if (x.items[0].len != 1) {
-                    errorMsg(&.{"Warning: separator will be treated as a single character"});
+                    errorMsg(&.{"Error: separator must be a single character"});
+                    std.process.exit(0);
                 }
                 self.separator = x.items[0][0];
             }
