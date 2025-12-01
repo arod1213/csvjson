@@ -22,11 +22,22 @@ Choose read type (all, keys, types)
 Defaults to all
 
 bash
-
+### `-r all`
 ```bash
+# prints all key value pairs for all lines in csv
 cat input.csv | csvjson -r all
+
+# prints first set of key value pairs
+cat input.csv | csvjson -r all -l 1
+
+# prints only the 50th set of key value pairs
+cat input.csv | csvjson -r all -l 1 -o 50
+```
+
+### `-r types`
+```bash
+# prints all possible types for each key value
 cat input.csv | csvjson -r types
-csvjson -r keys -f ./*.csv
 ```
 
 ### `-r keys`
