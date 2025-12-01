@@ -26,6 +26,14 @@ pub fn parseSeparator(value: []const u8) u8 {
     }
 }
 
+pub fn help() void {
+    print("-f: list of files to read from (only valid for -r keys)\n", .{});
+    print("-r: read type [all, types, keys]\n", .{});
+    print("-o: line offset to start reading from\n", .{});
+    print("-l: total lines to read\n", .{});
+    print("-m: if enabled, print minimized jsonl\n", .{});
+}
+
 pub const Args = struct {
     offset: usize = 0,
     line_count: ?usize = null,
@@ -41,6 +49,13 @@ pub const Args = struct {
         var self = Args{};
 
         const input = try args.argsToMap(alloc);
+
+        // print help messages
+        if (input.get("-h") != null) {
+            help();
+            std.process.exit(0);
+        }
+
         self.files = try args.parseField(alloc, []const u8, &input, "-f");
         {
             const x = try args.parseField(alloc, ReadType, &input, "-r");

@@ -17,6 +17,10 @@ CSVJSON converts comma-separated values (CSV) and tab-separated values (TSV) fil
 
 ## Flags
 
+### `-h`
+
+Prints help info
+
 ### `-r`
 
 ```bash
