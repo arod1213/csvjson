@@ -119,7 +119,7 @@ cat input.csv | csvjson
 bash
 
 ```bash
-input.tsv | csvjson -t -s=$'\t'
+input.tsv | csvjson -r types -s $'\t'
 ```
 
 ### Process specific range with JSONL output
@@ -127,7 +127,8 @@ input.tsv | csvjson -t -s=$'\t'
 bash
 
 ```bash
-cat data.csv | csvjson -o=50 -l=100 -m  # Lines 50-150 as JSONL
+# lines 50-150 as JSONL
+cat data.csv | csvjson -o 50 -l 100 -m  
 ```
 
 ## Output Formats
@@ -158,7 +159,7 @@ cat data.csv | csvjson -o=50 -l=100 -m  # Lines 50-150 as JSONL
 {"name":"Jane Smith","favorite_color":"blue","languages":["English"],"age":25,"email":"jane@example.com"}
 ```
 
-### Pretty-printed JSON with types (`-t` flag)
+### Pretty-printed JSON with types (`-r types` flag)
 ```json
 {
     "name": "String",
