@@ -31,11 +31,11 @@ fn parse_csv(alloc: Allocator, writer: *std.Io.Writer) !void {
                 break :blk;
             }
             for (input.files.?.items) |path| {
-                if (args.field_name == null) {
+                if (args.field_names == null or args.field_names.?.len == 0) {
                     _ = try writer.write("Error: please provide a field name\n");
                     break :blk;
                 }
-                try commands.field.read_field(alloc, writer, &args, path, &args.field_name.?);
+                try commands.field.read_field(alloc, writer, &args, path, &args.field_names.?);
             }
         },
         .type => {

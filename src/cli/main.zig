@@ -50,7 +50,7 @@ pub const OSArgs = struct {
     separator: u8 = ',',
     read_type: ReadType = .all,
 
-    field_name: ?[]const u8 = null,
+    field_name: ?[][]const u8 = null,
     files: ?ArrayList([]const u8) = null,
 
     const Self = @This();
@@ -94,11 +94,11 @@ pub const OSArgs = struct {
         }
 
         {
-            const x = args.parseField(alloc, []const u8, &input, "-n") catch {
+            var x = args.parseField(alloc, []const u8, &input, "-n") catch {
                 errorMsg(&.{"Error: field name must be a string"});
                 std.process.exit(0);
             };
-            if (x.items.len > 0) self.field_name = x.items[0];
+            if (x.items.len > 0) self.field_name = try x.toOwnedSlice(alloc);
         }
 
         {
@@ -129,7 +129,7 @@ pub const OSArgs = struct {
             .read_type = self.read_type,
             .separator = self.separator,
             .offset = self.offset,
-            .field_name = self.field_name,
+            .field_names = self.field_name,
         };
     }
 };

@@ -25,6 +25,6 @@ pub fn ReadArgs() type {
         minified: bool = false,
         separator: u8 = ',',
         read_type: ReadType = .all,
-        field_name: ?[]const u8 = null,
+        field_names: ?[][]const u8 = null,
     };
 }

@@ -14,7 +14,7 @@ const types = xsv.types;
 const link = xsv.link;
 const write = xsv.write;
 
-pub fn read_field(alloc: Allocator, writer: *std.Io.Writer, args: *const input, path: []const u8, field_name: *const []const u8) !void {
+pub fn read_field(alloc: Allocator, writer: *std.Io.Writer, args: *const input, path: []const u8, fields: *const [][]const u8) !void {
     var file = try blk: {
         if (std.fs.path.isAbsolute(path)) {
             break :blk std.fs.openFileAbsolute(path, .{ .mode = .read_only });
@@ -25,19 +25,32 @@ pub fn read_field(alloc: Allocator, writer: *std.Io.Writer, args: *const input, 
     };
     var in_buf: [4096 * 5]u8 = undefined;
     var rdr = file.reader(&in_buf);
+
     var xsv_reader = try xsv.CSVReader.init(alloc, &rdr.interface, args);
     defer xsv_reader.deinit();
-    const hd = try xsv_reader.next();
 
-    var found: bool = false;
+    const hd = try xsv_reader.next();
     const iter = hd.keys();
-    for (iter) |key| {
-        if (std.mem.eql(u8, key, field_name.*)) {
-            found = true;
+
+    var list = try ArrayList([]const u8).initCapacity(alloc, 5);
+    defer list.deinit(alloc);
+
+    for (fields.*) |field| {
+        var found: bool = false;
+        for (iter) |key| {
+            if (std.mem.eql(u8, key, field)) {
+                found = true;
+            }
+        }
+        if (!found) {
+            try list.append(alloc, field);
         }
     }
-    if (!found) {
-        const str = try std.fmt.allocPrint(alloc, "{s}: missing {s}\n", .{ path, field_name.* });
+
+    const missed = try list.toOwnedSlice(alloc);
+    const joined = try std.mem.join(alloc, " and ", missed);
+    if (missed.len > 0) {
+        const str = try std.fmt.allocPrint(alloc, "{s}: missing {s}\n", .{ path, joined });
         _ = try writer.write(str);
     }
 }
