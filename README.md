@@ -25,7 +25,7 @@ Prints help info
 
 ```bash
 # read type options
-all | keys | types
+all | key | type | field
 ```
 Defaults to all
 
@@ -41,22 +41,31 @@ cat input.csv | csvjson -r all -l 1
 cat input.csv | csvjson -r all -l 1 -o 50
 ```
 
-### `-r types`
+### `-r type`
 ```bash
 # prints all possible types for each key value
-cat input.csv | csvjson -r types
+cat input.csv | csvjson -r type
 ```
 
-### `-r keys`
+### `-r key`
 ```bash
 # finds all shared keys for all csvs in current directory
-csvjson -r keys -f ./*.csv
+csvjson -r key -f ./*.csv
 
 # finds all keys which at least 5 files share in common
-csvjson -r keys -f ./*.csv -l 5
+csvjson -r key -f ./*.csv -l 5
 
 # finds all keys
-csvjson -r keys -f ./*.csv -l 1
+csvjson -r key -f ./*.csv -l 1
+```
+
+### `-r field`
+```bash
+# prints all files that are missing the header "Title"
+csvjson -r field -n "Title" -f ./*.csv
+
+# prints all files that are missing the headers "Title" or "Artist"
+csvjson -r field -n "Title" "Artist" -f ./*.csv
 ```
 
 ### `-s`
@@ -123,7 +132,7 @@ cat input.csv | csvjson
 bash
 
 ```bash
-input.tsv | csvjson -r types -s $'\t'
+input.tsv | csvjson -r type -s $'\t'
 ```
 
 ### Process specific range with JSONL output

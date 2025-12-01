@@ -17,13 +17,14 @@ pub fn parseSeparator(value: []const u8) u8 {
     }
 }
 
-pub const ReadType = enum { all, types, keys };
-pub fn Args() type {
+pub const ReadType = enum { all, type, key, field };
+pub fn ReadArgs() type {
     return struct {
         offset: usize = 0,
         line_count: ?usize = null,
         minified: bool = false,
         separator: u8 = ',',
         read_type: ReadType = .all,
+        field_name: ?[]const u8 = null,
     };
 }

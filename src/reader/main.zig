@@ -14,7 +14,7 @@ pub const args = @import("./args.zig");
 
 pub const CSVReader = struct {
     alloc: Allocator,
-    input: *const args.Args(),
+    input: *const args.ReadArgs(),
     reader: *std.Io.Reader,
     headers: std.ArrayList([]const u8),
 
@@ -22,7 +22,7 @@ pub const CSVReader = struct {
     line_count: usize = 0,
     done: bool = false,
 
-    pub fn init(alloc: Allocator, reader: *std.Io.Reader, arg_list: *const args.Args()) !@This() {
+    pub fn init(alloc: Allocator, reader: *std.Io.Reader, arg_list: *const args.ReadArgs()) !@This() {
         const sep = arg_list.separator;
 
         const heading = try reader.takeDelimiterExclusive('\n');

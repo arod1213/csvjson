@@ -10,7 +10,7 @@ const json = std.json;
 const xsv = @import("xsv_reader");
 const args = @import("./args.zig");
 const ReadType = xsv.args.ReadType;
-const ReadArgs = xsv.args.Args();
+const ReadArgs = xsv.args.ReadArgs();
 const types = xsv.types;
 const link = xsv.link;
 const write = xsv.write;
@@ -27,10 +27,13 @@ pub fn parseSeparator(value: []const u8) u8 {
 }
 
 pub fn help() void {
-    print("-f: list of files to read from (only valid for -r keys)\n", .{});
-    print("-r: read type [all, types, keys]\n", .{});
-    print("-o: line offset to start reading from\n", .{});
+    print("-f: list of files to read from (only valid for -r key)\n", .{});
+    print("-r: read type [all, type, key, field]\n", .{});
+
+    print("-n: field name to search for (only valid for -r field)\n", .{});
+
     print("-l: total lines to read\n", .{});
+    print("-o: line offset to start reading from\n", .{});
     print("-m: if enabled, print minimized jsonl\n", .{});
 }
 
@@ -40,19 +43,20 @@ pub fn errorMsg(msgs: []const []const u8) void {
     }
 }
 
-pub const Args = struct {
+pub const OSArgs = struct {
     offset: usize = 0,
     line_count: ?usize = null,
     minified: bool = false,
     separator: u8 = ',',
     read_type: ReadType = .all,
 
+    field_name: ?[]const u8 = null,
     files: ?ArrayList([]const u8) = null,
 
     const Self = @This();
 
     pub fn fromArgs(alloc: Allocator) !Self {
-        var self = Args{};
+        var self = OSArgs{};
 
         const input = try args.argsToMap(alloc);
 
@@ -90,6 +94,14 @@ pub const Args = struct {
         }
 
         {
+            const x = args.parseField(alloc, []const u8, &input, "-n") catch {
+                errorMsg(&.{"Error: field name must be a string"});
+                std.process.exit(0);
+            };
+            if (x.items.len > 0) self.field_name = x.items[0];
+        }
+
+        {
             self.minified = if (input.get("-m") == null) false else true;
         }
 
@@ -117,6 +129,7 @@ pub const Args = struct {
             .read_type = self.read_type,
             .separator = self.separator,
             .offset = self.offset,
+            .field_name = self.field_name,
         };
     }
 };

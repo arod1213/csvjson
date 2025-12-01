@@ -14,7 +14,7 @@ const types = xsv.types;
 const link = xsv.link;
 const write = xsv.write;
 
-pub fn read_keys(alloc: Allocator, args: *const input, path: []const u8, map: *HashMap(usize)) !void {
+pub fn read_field(alloc: Allocator, writer: *std.Io.Writer, args: *const input, path: []const u8, field_name: *const []const u8) !void {
     var file = try blk: {
         if (std.fs.path.isAbsolute(path)) {
             break :blk std.fs.openFileAbsolute(path, .{ .mode = .read_only });
@@ -29,13 +29,15 @@ pub fn read_keys(alloc: Allocator, args: *const input, path: []const u8, map: *H
     defer xsv_reader.deinit();
     const hd = try xsv_reader.next();
 
+    var found: bool = false;
     const iter = hd.keys();
     for (iter) |key| {
-        const val = map.get(key);
-        if (val) |x| {
-            try map.put(key, x + 1);
-        } else {
-            try map.put(key, 1);
+        if (std.mem.eql(u8, key, field_name.*)) {
+            found = true;
         }
+    }
+    if (!found) {
+        const str = try std.fmt.allocPrint(alloc, "{s}: missing {s}\n", .{ path, field_name.* });
+        _ = try writer.write(str);
     }
 }

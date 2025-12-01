@@ -12,46 +12,66 @@ const ArrayList = std.ArrayList;
 const HashMap = std.StringHashMap;
 
 fn parse_csv(alloc: Allocator, writer: *std.Io.Writer) !void {
-    const input = try cli.Args.fromArgs(alloc);
+    const input = try cli.OSArgs.fromArgs(alloc);
     const args = input.into_reader_args();
 
-    switch (args.read_type) {
+    blk: switch (args.read_type) {
         .all => {
             var in_buf: [4096 * 5]u8 = undefined;
             var reader = std.fs.File.stdin().reader(&in_buf);
+
             var csv_reader = try xsv.CSVReader.init(alloc, &reader.interface, &args);
             defer csv_reader.deinit();
+
             try commands.read.read_vals(&csv_reader, writer, &args);
         },
-        .types => {
+        .field => {
+            if (input.files == null or input.files.?.items.len == 0) {
+                _ = try writer.write("Error: please provide files to read\n");
+                break :blk;
+            }
+            for (input.files.?.items) |path| {
+                if (args.field_name == null) {
+                    _ = try writer.write("Error: please provide a field name\n");
+                    break :blk;
+                }
+                try commands.field.read_field(alloc, writer, &args, path, &args.field_name.?);
+            }
+        },
+        .type => {
             var in_buf: [4096 * 5]u8 = undefined;
             var reader = std.fs.File.stdin().reader(&in_buf);
+
             var csv_reader = try xsv.CSVReader.init(alloc, &reader.interface, &args);
             defer csv_reader.deinit();
             try commands.types.read_types(alloc, &csv_reader, writer, &args);
         },
-        .keys => {
-            if (input.files) |files| {
-                var map = HashMap(usize).init(alloc);
-                defer map.deinit();
-
-                for (files.items) |path| {
-                    try commands.unique.read_keys(alloc, &args, path, &map);
-                }
-
-                var iter = map.iterator();
-                while (iter.next()) |set| {
-                    const key, const val = .{ set.key_ptr, set.value_ptr };
-                    const limit = if (args.line_count) |l| l else files.items.len;
-                    if (val.* < limit) {
-                        _ = map.remove(key.*);
-                    }
-                }
-                var obj = try xsv.link.mapToObject(usize, alloc, &map);
-                defer obj.deinit();
-                const json_obj = std.json.Value{ .object = obj };
-                try xsv.write.stringify(writer, &json_obj, args.minified);
+        .key => {
+            if (input.files == null or input.files.?.items.len == 0) {
+                _ = try writer.write("Error: please provide files to read\n");
+                break :blk;
             }
+
+            const files = input.files.?;
+            var map = HashMap(usize).init(alloc);
+            defer map.deinit();
+
+            for (files.items) |path| {
+                try commands.unique.read_keys(alloc, &args, path, &map);
+            }
+
+            var iter = map.iterator();
+            while (iter.next()) |set| {
+                const key, const val = .{ set.key_ptr, set.value_ptr };
+                const limit = if (args.line_count) |l| l else files.items.len;
+                if (val.* < limit) {
+                    _ = map.remove(key.*);
+                }
+            }
+            var obj = try xsv.link.mapToObject(usize, alloc, &map);
+            defer obj.deinit();
+            const json_obj = std.json.Value{ .object = obj };
+            try xsv.write.stringify(writer, &json_obj, args.minified);
         },
     }
 
