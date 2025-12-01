@@ -9,7 +9,8 @@ CSVJSON converts comma-separated values (CSV) and tab-separated values (TSV) fil
 ## Features
 
 -   Convert CSV/TSV files to JSON
--   Optional type definitions for JSON keys
+-   Type definitions for JSON keys
+-   Show shared keys given multiple files
 -   Customizable delimiters for various file formats
 -   Line-based processing with offset support
 -   Multiple output formats (pretty-printed JSON or JSONL)
@@ -18,10 +19,12 @@ CSVJSON converts comma-separated values (CSV) and tab-separated values (TSV) fil
 
 ### `-r`
 
-Choose read type (all, keys, types)
+```bash
+# read type options
+all | keys | types
+```
 Defaults to all
 
-bash
 ### `-r all`
 ```bash
 # prints all key value pairs for all lines in csv
@@ -52,7 +55,7 @@ csvjson -r keys -f ./*.csv -l 5
 csvjson -r keys -f ./*.csv -l 1
 ```
 
-### `-s` / `-S`
+### `-s`
 
 Set the delimiter/separator for the input file.
 
@@ -68,24 +71,26 @@ cat input.csv | csvjson -s ','
 cat input.tsv | csvjson -s $'\t'
 ```
 
-### `-l` / `-L`
+### `-l`
 
 Set the total number of lines to read from the input file.
 
 bash
 
 ```bash
-cat input.csv | csvjson -l=100  # Read only first 100 lines
+# read only first 100 lines
+cat input.csv | csvjson -l=100  
 ```
 
-### `-o` / `-O`
+### `-o`
 
 Set the offset for which line to start reading from.
 
 bash
 
 ```bash
-cat input.csv | csvjson -o=10  # Skip first 10 lines
+# skip first 10 lines
+cat input.csv | csvjson -o=10
 ```
 
 ### `-m`
@@ -95,6 +100,7 @@ Output JSONL (JSON Lines) format instead of pretty-printed JSON. Each line conta
 bash
 
 ```bash
+# print minimized jsonl
 cat input.csv | csvjson -m
 ```
 
