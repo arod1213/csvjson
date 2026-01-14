@@ -11,6 +11,9 @@ const Value = std.json.Value;
 const ArrayList = std.ArrayList;
 const HashMap = std.StringHashMap;
 
+// TODO: support -f flag for all methods
+// TODO: support cat piping for all methods
+
 fn parse_csv(alloc: Allocator, writer: *std.Io.Writer) !void {
     const input = try cli.OSArgs.fromArgs(alloc);
     const args = input.into_reader_args();
