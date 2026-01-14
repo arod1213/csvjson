@@ -6,6 +6,8 @@ const expect = std.testing.expect;
 const array = std.ArrayList;
 const json = std.json;
 
+const log = std.log;
+
 pub const fmt = @import("./fmt.zig");
 pub const write = @import("./write.zig");
 pub const link = @import("./link.zig");
@@ -25,7 +27,11 @@ pub const CSVReader = struct {
     pub fn init(alloc: Allocator, reader: *std.Io.Reader, arg_list: *const args.ReadArgs()) !@This() {
         const sep = arg_list.separator;
 
-        const heading = try reader.takeDelimiterExclusive('\n');
+        const raw = try reader.takeDelimiter('\n');
+        if (raw == null) {
+            return error.NoHeader;
+        }
+        const heading = std.mem.trimEnd(u8, raw.?, "\r");
         const headers = try collectFields(alloc, heading, sep);
 
         return .{
@@ -45,11 +51,17 @@ pub const CSVReader = struct {
         self.line_count += 1;
 
         while (self.line_count <= self.input.offset) {
-            _ = try self.reader.takeDelimiterExclusive('\n');
+            log.debug("skipping line\n", .{});
+            _ = try self.reader.takeDelimiter('\n');
             self.line_count += 1;
         }
 
-        const line = try self.reader.takeDelimiterExclusive('\n');
+        const raw = try self.reader.takeDelimiter('\n');
+        if (raw == null) {
+            return error.NoHeader;
+        }
+        const line = std.mem.trimEnd(u8, raw.?, "\r");
+
         return try collectObject(self.alloc, line, self.separator, &self.headers);
     }
 };
