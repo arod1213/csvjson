@@ -2,6 +2,7 @@ const std = @import("std");
 const Allocator = std.mem.Allocator;
 const ArrayList = std.ArrayList;
 const assert = std.debug.assert;
+const log = std.log;
 
 const xsv = @import("xsv_reader");
 const parser = @import("./parse.zig");
@@ -41,9 +42,22 @@ pub const OSArgs = struct {
         };
         {
             const x = parser.parseField(alloc, ReadType, &input, "-r") catch {
+                var options = try std.ArrayList(u8).initCapacity(alloc, 15);
+                defer options.deinit(alloc);
+
+                const info = @typeInfo(ReadType);
+                inline for (info.@"enum".fields, 0..) |f, i| {
+                    if (i != 0) {
+                        try options.appendSlice(alloc, " | ");
+                    }
+                    try options.appendSlice(alloc, f.name);
+                }
+                const option_list = try options.toOwnedSlice(alloc);
+
                 help.errorMsg(&.{
                     "Error: read type could not be parsed",
-                    "Valid options: all | types | keys",
+                    // "Valid options: all | type | keys",
+                    option_list,
                 });
                 std.process.exit(0);
             };
