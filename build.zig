@@ -4,23 +4,23 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
 
-    const xsv_reader = b.addModule("xsv_reader", .{
-        .root_source_file = b.path("src/reader/main.zig"),
+    const xsv_dep = b.dependency("xsv_reader", .{
         .target = target,
-        .optimize = .ReleaseFast,
+        .optimize = optimize,
     });
+    const xsv_reader = xsv_dep.module("xsv_reader");
 
     const cli = b.addModule("cli", .{
         .root_source_file = b.path("src/cli/main.zig"),
         .target = target,
-        .optimize = .ReleaseFast,
+        .optimize = optimize,
     });
     cli.addImport("xsv_reader", xsv_reader);
 
     const commands = b.addModule("commands", .{
         .root_source_file = b.path("src/commands/main.zig"),
         .target = target,
-        .optimize = .ReleaseFast,
+        .optimize = optimize,
     });
     commands.addImport("xsv_reader", xsv_reader);
 

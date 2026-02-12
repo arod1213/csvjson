@@ -8,9 +8,9 @@ const stdout = std.fs.File.stdout;
 const json = std.json;
 const fmt = @import("fmt.zig");
 
-pub fn linkHeaders(alloc: Allocator, heading: *const array([]const u8), data: *const array([]const u8)) !std.StringHashMap([]const u8) {
+pub fn linkHeaders(alloc: Allocator, heading: [][]const u8, data: *const array([]const u8)) !std.StringHashMap([]const u8) {
     var map = std.StringHashMap([]const u8).init(alloc);
-    for (heading.items, 0..) |header, idx| {
+    for (heading, 0..) |header, idx| {
         if (data.items.len <= idx) break;
         _ = try map.put(header, data.items[idx]);
     }

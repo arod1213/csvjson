@@ -7,12 +7,9 @@ const expect = std.testing.expect;
 const ArrayList = std.ArrayList;
 
 const xsv = @import("xsv_reader");
-const input = xsv.args.ReadArgs();
-const types = xsv.types;
-const link = xsv.link;
-const write = xsv.write;
+const ReadArgs = xsv.Args;
 
-pub fn read_vals(csv: *xsv.CSVReader, writer: *std.Io.Writer, args: *const input) !void {
+pub fn read_vals(alloc: Allocator, csv: *xsv.CSVReader, writer: *std.Io.Writer, args: *const ReadArgs) !void {
     var idx: usize = 0;
     while (true) : (idx += 1) {
         if (args.line_count) |lc| {
@@ -20,10 +17,11 @@ pub fn read_vals(csv: *xsv.CSVReader, writer: *std.Io.Writer, args: *const input
                 break;
             }
         }
-        var obj = csv.next() catch break;
-        const json_obj = std.json.Value{ .object = obj };
+        var obj = csv.next(alloc) catch break;
+        const obj_as_json = try xsv.strMapToJson(alloc, &obj);
+        const json_obj = std.json.Value{ .object = obj_as_json };
 
-        try write.stringify(writer, &json_obj, args.minified);
+        try xsv.stringify(writer, &json_obj, args.minified);
         _ = try writer.writeByte('\n');
         obj.deinit();
     }

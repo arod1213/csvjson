@@ -26,7 +26,7 @@ fn parse_csv(alloc: Allocator, writer: *std.Io.Writer) !void {
             var csv_reader = try xsv.CSVReader.init(alloc, &reader.interface, &args);
             defer csv_reader.deinit();
 
-            try commands.read.read_vals(&csv_reader, writer, &args);
+            try commands.read.read_vals(alloc, &csv_reader, writer, &args);
         },
         .field => {
             if (input.files == null or input.files.?.len == 0) {
@@ -71,10 +71,10 @@ fn parse_csv(alloc: Allocator, writer: *std.Io.Writer) !void {
                     _ = map.remove(key.*);
                 }
             }
-            var obj = try xsv.link.mapToObject(usize, alloc, &map);
+            var obj = try xsv.mapToObject(usize, alloc, &map);
             defer obj.deinit();
             const json_obj = std.json.Value{ .object = obj };
-            try xsv.write.stringify(writer, &json_obj, args.minified);
+            try xsv.stringify(writer, &json_obj, args.minified);
         },
     }
 

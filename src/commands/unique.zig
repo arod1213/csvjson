@@ -9,12 +9,9 @@ const HashMap = std.StringHashMap;
 const Value = std.json.Value;
 
 const xsv = @import("xsv_reader");
-const input = xsv.args.ReadArgs();
-const types = xsv.types;
-const link = xsv.link;
-const write = xsv.write;
+const Args = xsv.Args;
 
-pub fn read_keys(alloc: Allocator, args: *const input, path: []const u8, map: *HashMap(usize)) !void {
+pub fn read_keys(alloc: Allocator, args: *const Args, path: []const u8, map: *HashMap(usize)) !void {
     var file = try blk: {
         if (std.fs.path.isAbsolute(path)) {
             break :blk std.fs.openFileAbsolute(path, .{ .mode = .read_only });
@@ -27,15 +24,15 @@ pub fn read_keys(alloc: Allocator, args: *const input, path: []const u8, map: *H
     var rdr = file.reader(&in_buf);
     var xsv_reader = try xsv.CSVReader.init(alloc, &rdr.interface, args);
     defer xsv_reader.deinit();
-    const hd = try xsv_reader.next();
+    const hd = try xsv_reader.next(alloc);
 
-    const iter = hd.keys();
-    for (iter) |key| {
-        const val = map.get(key);
+    var iter = hd.keyIterator();
+    while (iter.next()) |key| {
+        const val = map.get(key.*);
         if (val) |x| {
-            try map.put(key, x + 1);
+            try map.put(key.*, x + 1);
         } else {
-            try map.put(key, 1);
+            try map.put(key.*, 1);
         }
     }
 }

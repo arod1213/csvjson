@@ -7,12 +7,9 @@ const expect = std.testing.expect;
 const ArrayList = std.ArrayList;
 
 const xsv = @import("xsv_reader");
-const input = xsv.args.ReadArgs();
-const types = xsv.types;
-const link = xsv.link;
-const write = xsv.write;
+const ReadArgs = xsv.Args;
 
-pub fn read_types(alloc: Allocator, csv: *xsv.CSVReader, writer: *std.Io.Writer, args: *const input) !void {
+pub fn read_types(alloc: Allocator, csv: *xsv.CSVReader, writer: *std.Io.Writer, args: *const ReadArgs) !void {
     var type_map = std.StringHashMap(*ArrayList([]const u8)).init(alloc);
     defer type_map.deinit();
 
@@ -23,17 +20,18 @@ pub fn read_types(alloc: Allocator, csv: *xsv.CSVReader, writer: *std.Io.Writer,
                 break;
             }
         }
-        const obj = csv.next() catch break;
-        types.save_types(alloc, &type_map, obj) catch {
+        const obj = csv.next(alloc) catch break;
+        const json_obj = try xsv.strMapToJson(alloc, &obj);
+        xsv.saveTypes(alloc, &type_map, json_obj) catch {
             continue;
         };
     }
 
-    const map = try types.flatten_type_map(alloc, type_map);
-    var obj = try link.mapToObject([]const u8, alloc, map);
+    const map = try xsv.flattenTypeMap(alloc, type_map);
+    var obj = try xsv.mapToObject([]const u8, alloc, map);
     const json_obj = std.json.Value{ .object = obj };
 
-    try write.stringify(writer, &json_obj, args.minified);
+    try xsv.stringify(writer, &json_obj, args.minified);
     obj.deinit();
 
     try writer.flush();

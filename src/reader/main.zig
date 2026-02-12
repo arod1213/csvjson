@@ -5,26 +5,33 @@ const assert = std.debug.assert;
 const expect = std.testing.expect;
 const array = std.ArrayList;
 const json = std.json;
-
 const log = std.log;
 
-pub const fmt = @import("./fmt.zig");
-pub const write = @import("./write.zig");
-pub const link = @import("./link.zig");
-pub const types = @import("./types.zig");
-pub const args = @import("./args.zig");
+const fmt = @import("./fmt.zig");
+const write = @import("./write.zig");
+const link = @import("./link.zig");
+const types = @import("./types.zig");
+const args = @import("./args.zig");
+
+pub const ReadArgs = args.ReadArgs;
+pub const ReadType = args.ReadType;
+pub const mapToObject = link.mapToObject;
+pub const stringify = write.stringify;
+pub const saveTypes = types.saveTypes;
+pub const flattenTypeMap = types.flattenTypeMap;
 
 pub const CSVReader = struct {
     alloc: Allocator,
-    input: *const args.ReadArgs(),
+    input: *const args.ReadArgs,
     reader: *std.Io.Reader,
-    headers: std.ArrayList([]const u8),
+    headers: [][]const u8,
 
     separator: u8,
     line_count: usize = 0,
-    done: bool = false,
 
-    pub fn init(alloc: Allocator, reader: *std.Io.Reader, arg_list: *const args.ReadArgs()) !@This() {
+    const Self = @This();
+
+    pub fn init(alloc: Allocator, reader: *std.Io.Reader, arg_list: *const ReadArgs) !Self {
         const sep = arg_list.separator;
 
         const raw = try reader.takeDelimiter('\n');
@@ -37,17 +44,17 @@ pub const CSVReader = struct {
         return .{
             .alloc = alloc,
             .reader = reader,
-            .headers = headers,
+            .headers = try headers.toOwnedSlice(alloc),
             .input = arg_list,
             .separator = sep,
         };
     }
 
-    pub fn deinit(self: *@This()) void {
-        self.headers.deinit(self.alloc);
+    pub fn deinit(_: *Self) void {
+        // destroy pointers here
     }
 
-    pub fn next(self: *@This()) !std.json.ObjectMap {
+    pub fn next(self: *Self) !std.json.ObjectMap {
         self.line_count += 1;
 
         while (self.line_count <= self.input.offset) {
@@ -99,7 +106,7 @@ test "collect fields" {
     }
 }
 
-fn collectObject(alloc: Allocator, line: []const u8, sep: u8, headers: *array([]const u8)) !std.json.ObjectMap {
+fn collectObject(alloc: Allocator, line: []const u8, sep: u8, headers: [][]const u8) !std.json.ObjectMap {
     var data = try collectFields(alloc, line, sep);
     defer data.deinit(alloc);
 

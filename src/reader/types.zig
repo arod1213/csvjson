@@ -10,7 +10,7 @@ const print = std.debug.print;
 // TODO: fix comparisons of Arrays of differing types and converge
 // ex.) Array of Int + Array of String == Array of Int \ String
 // ex.) Array of Int | String + Array of Int == Array of Int | String
-fn json_to_str(alloc: Allocator, value: *const Value) ![]const u8 {
+fn jsonToStr(alloc: Allocator, value: *const Value) ![]const u8 {
     return switch (value.*) {
         .string => "String",
         .bool => "Bool",
@@ -23,8 +23,8 @@ fn json_to_str(alloc: Allocator, value: *const Value) ![]const u8 {
             defer new_list.deinit(alloc);
 
             for (x.items) |inside| {
-                const st = try json_to_str(alloc, &inside);
-                try store_info(alloc, st, &new_list);
+                const st = try jsonToStr(alloc, &inside);
+                try storeInfo(alloc, st, &new_list);
             }
             const slices = try new_list.toOwnedSlice(alloc);
             const flat = try std.mem.join(alloc, " or ", slices);
@@ -38,7 +38,7 @@ fn json_to_str(alloc: Allocator, value: *const Value) ![]const u8 {
     };
 }
 
-pub fn save_types(alloc: Allocator, type_map: *std.StringHashMap(*ArrayList([]const u8)), obj: std.json.ObjectMap) !void {
+pub fn saveTypes(alloc: Allocator, type_map: *std.StringHashMap(*ArrayList([]const u8)), obj: std.json.ObjectMap) !void {
     var iter = obj.iterator();
     while (iter.next()) |pair| {
         const key = pair.key_ptr;
@@ -49,19 +49,19 @@ pub fn save_types(alloc: Allocator, type_map: *std.StringHashMap(*ArrayList([]co
 
         if (pair_info != null) {
             const ptr = pair_info.?;
-            const json_str = try json_to_str(alloc, value);
-            try store_info(alloc, json_str, ptr);
+            const json_str = try jsonToStr(alloc, value);
+            try storeInfo(alloc, json_str, ptr);
         } else {
             const ptr = try alloc.create(ArrayList([]const u8));
             ptr.* = try ArrayList([]const u8).initCapacity(alloc, 2);
             try type_map.put(key.*, ptr);
-            const json_str = try json_to_str(alloc, value);
-            try store_info(alloc, json_str, ptr);
+            const json_str = try jsonToStr(alloc, value);
+            try storeInfo(alloc, json_str, ptr);
         }
     }
 }
 
-pub fn flatten_type_map(alloc: Allocator, type_map: std.StringHashMap(*ArrayList([]const u8))) !*std.StringHashMap([]const u8) {
+pub fn flattenTypeMap(alloc: Allocator, type_map: std.StringHashMap(*ArrayList([]const u8))) !*std.StringHashMap([]const u8) {
     var type_map_flat = std.StringHashMap([]const u8).init(alloc);
     var map_iter = type_map.iterator();
     while (map_iter.next()) |map_pair| {
@@ -84,7 +84,7 @@ pub fn inSlice(haystack: [][]const u8, needle: []const u8) bool {
     return false;
 }
 
-fn store_info(alloc: Allocator, val: []const u8, existing: *ArrayList([]const u8)) !void {
+fn storeInfo(alloc: Allocator, val: []const u8, existing: *ArrayList([]const u8)) !void {
     const exists = inSlice(existing.items, val);
     if (!exists) {
         try existing.append(alloc, val);
@@ -99,15 +99,15 @@ test "store_info" {
         .{ .float = 10.0 },
         .{ .null = {} },
     });
-    const text = try store_info(alloc, &list);
+    const text = try storeInfo(alloc, &list);
     try expect(std.mem.eql(u8, text, "FLOAT, NULL"));
 }
 
-fn get_types(alloc: Allocator, cache: std.HashMap([]const u8, std.ArrayList(Value))) !*const HashMap([]const u8, Value) {
+fn getTypes(alloc: Allocator, cache: std.HashMap([]const u8, std.ArrayList(Value))) !*const HashMap([]const u8, Value) {
     const map = try std.HashMap([]const u8, Value).init(alloc);
     var val_list = cache.iterator();
     while (val_list.next()) |vals| {
-        const value = store_info(alloc, vals.value_ptr);
+        const value = storeInfo(alloc, vals.value_ptr);
         map.put(vals.key_ptr, std.json.Value{ .str = value });
     }
     return &map;

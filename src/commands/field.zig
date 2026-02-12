@@ -9,12 +9,9 @@ const HashMap = std.StringHashMap;
 const Value = std.json.Value;
 
 const xsv = @import("xsv_reader");
-const input = xsv.args.ReadArgs();
-const types = xsv.types;
-const link = xsv.link;
-const write = xsv.write;
+const ReadArgs = xsv.Args;
 
-pub fn read_field(alloc: Allocator, writer: *std.Io.Writer, args: *const input, path: []const u8, fields: *const [][]const u8) !void {
+pub fn read_field(alloc: Allocator, writer: *std.Io.Writer, args: *const ReadArgs, path: []const u8, fields: *const [][]const u8) !void {
     var file = try blk: {
         if (std.fs.path.isAbsolute(path)) {
             break :blk std.fs.openFileAbsolute(path, .{ .mode = .read_only });
@@ -29,16 +26,16 @@ pub fn read_field(alloc: Allocator, writer: *std.Io.Writer, args: *const input, 
     var xsv_reader = try xsv.CSVReader.init(alloc, &rdr.interface, args);
     defer xsv_reader.deinit();
 
-    const hd = try xsv_reader.next();
-    const iter = hd.keys();
+    const hd = try xsv_reader.next(alloc);
+    var iter = hd.keyIterator();
 
     var list = try ArrayList([]const u8).initCapacity(alloc, 5);
     defer list.deinit(alloc);
 
     for (fields.*) |field| {
         var found: bool = false;
-        for (iter) |key| {
-            if (std.mem.eql(u8, key, field)) {
+        while (iter.next()) |key| {
+            if (std.mem.eql(u8, key.*, field)) {
                 found = true;
             }
         }

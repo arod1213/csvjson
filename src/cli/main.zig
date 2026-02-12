@@ -5,13 +5,11 @@ const assert = std.debug.assert;
 const log = std.log;
 
 const xsv = @import("xsv_reader");
+const Args = xsv.Args;
+const ReadType = xsv.ReadType;
+
 const parser = @import("./parse.zig");
 const help = @import("./help.zig");
-const ReadType = xsv.args.ReadType;
-const ReadArgs = xsv.args.ReadArgs();
-const types = xsv.types;
-const link = xsv.link;
-const write = xsv.write;
 
 pub const OSArgs = struct {
     offset: usize = 0,
@@ -108,8 +106,8 @@ pub const OSArgs = struct {
 
         return self;
     }
-    pub fn into_reader_args(self: @This()) ReadArgs {
-        return ReadArgs{
+    pub fn into_reader_args(self: @This()) Args {
+        return Args{
             .minified = self.minified,
             .line_count = self.line_count,
             .read_type = self.read_type,
